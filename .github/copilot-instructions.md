@@ -1,51 +1,148 @@
 ## Quick context for AI coding agents
 
-This repository is a Laravel 12 skeleton-based web application (PHP 8.2). The codebase follows standard PSR-4 layout with App\\ namespace mapping to `app/`. Frontend assets use Vite + Tailwind and live under `resources/`.
+This is a Laravel 12 (PHP 8.2) ecommerce application for selling and leasing new and used cars from various brands. Built with Vite + Tailwind CSS for frontend. The codebase follows PSR-4 with `App\\` namespace mapped to `app/`.
 
-Key files to inspect before making changes
-- `composer.json` — project dependencies and npm/composer script shortcuts (see `scripts.setup`, `scripts.dev`, `scripts.test`).
-- `routes/web.php` — web routes. Example: root route returns `view('welcome')`.
-- `bootstrap/app.php` — application boot configuration used to create the Application.
-- `app/Models/User.php` — example Eloquent model (uses `HasFactory`, `Notifiable`, and a typed `casts()` method). Use it as a model pattern.
-- `config/app.php` — environment-driven config; prefers `.env` values.
-- `phpunit.xml` — test environment. Tests run with an in-memory SQLite DB and `QUEUE_CONNECTION=sync`.
+### Key directories
 
-Developer workflows / useful commands (PowerShell)
-- Install and prepare (first-time):
-  composer install; php -r "file_exists('.env') || copy('.env.example', '.env');"; php artisan key:generate; php artisan migrate --force; npm install; npm run build
-- Local dev (starts server, queue worker and vite):
-  composer dev  (note: `composer dev` runs an npx concurrently command that invokes `php artisan serve`, queue listener and `npm run dev`)
-- Run tests: `composer test` or `php artisan test`. The test environment uses sqlite in-memory so DB setup is not required for CI.
+-   `composer.json` — scripts: `setup`, `dev`, `test` (use these for consistent workflows)
+-   `routes/web.php` — primary HTTP routing
+-   `app/Http/Controllers/` — controllers and request handling
+-   `app/Models/User.php` — canonical model pattern (uses `HasFactory`, `$fillable`, `casts()` for `password => 'hashed'`)
+-   `database/migrations` and `database/factories` — migrations & factories (prefer factories for test data)
+-   `resources/views/components/` — Blade components (ecommerce UI)
+-   `resources/css/app.css` — Tailwind + custom animations
+-   `resources/js/app.js` — Alpine.js + custom UI interactions
+-   `public/build/` — Vite build output (manifest-driven)
+-   `tests/` and `phpunit.xml` — tests run with in-memory SQLite; CI uses these settings
+-   `docker-compose.yml` — MySQL 8.0 + phpMyAdmin (localhost:8081)
 
-Project-specific conventions and patterns
-- Migration & factories: database migrations are under `database/migrations` and factories under `database/factories` (see `Database\\Factories\\UserFactory`). Prefer factories for test data.
-- Artisan scripts are wired in `composer.json` (e.g., `setup`, `dev`, `test`). When automating changes, prefer these scripted workflows to replicate local dev steps.
-- Frontend pipeline: Vite + Tailwind. Edit `resources/js` and `resources/css`; run `npm run dev` for hot rebuilds and `npm run build` for production assets.
-- Tests: `phpunit.xml` sets many env overrides (cache=array, session=array, mail=array). When writing tests, assume no external mail/queue/db unless explicitly configured.
+### Development workflow (Windows/PowerShell)
 
-Integration points & external dependencies
-- Auth scaffolding: `laravel/breeze` is present — authentication UI/flows may be scaffolded.
-- Background jobs: queue connection default is present; tests use `sync`. Production queue drivers may be set in `.env`.
-- External services are configured via `.env` + config files under `config/`. Avoid hardcoding credentials in code; read `config/*.php` to find service keys.
+**Known issue:** `php artisan serve` fails on some Windows machines with Hyper-V. Use workaround:
 
-When editing code — quick checklist for PRs
-1. Run `composer test` (or `php artisan test`) and fix failing tests. Tests expect sqlite in-memory by default.
-2. If you changed assets, run `npm run build` and include updated files from `public/build`/manifest.
-3. Keep API and route changes in `routes/web.php` (or create API routes in `routes/api.php` if applicable). Update any related controllers under `app/Http/Controllers`.
-4. Preserve config-driven behavior — add `.env` keys and default values in `config/*.php` when introducing new external dependencies.
+```powershell
+# Terminal 1 - PHP server
+php -S localhost:8000 -t public
 
-Examples from the codebase (use these as templates)
-- Root route: `routes/web.php`:
+# Terminal 2 - Vite dev server (hot reload)
+npm run dev
+```
 
-  Route::get('/', function () {
-      return view('welcome');
-  });
+Or use Docker for database + direct PHP server (recommended):
 
-- User model: `app/Models/User.php` — use `HasFactory`, set `$fillable`, hide `password`, and use typed `casts()` returning `['password' => 'hashed']`.
+```powershell
+docker compose up -d  # MySQL + phpMyAdmin
+npm run dev           # Vite hot reload in separate terminal
+```
 
-Notes & gotchas for AI agents
-- The repo's composer scripts will copy `.env.example` to `.env` automatically in several lifecycle scripts; however, tests and CI often rely on env overrides in `phpunit.xml`.
-- Use `php artisan migrate --force` in scripted setup (composer.setup uses this). For local edits you may prefer `php artisan migrate` interactively.
-- The codebase is Laravel-first; prefer idiomatic Eloquent, Jobs, Events, and the service container when wiring new functionality.
+**Setup from scratch:**
 
-If something in this file is unclear or you want more examples (controllers, factories, or common PR checks), tell me which area to expand and I will iterate.
+```powershell
+composer setup  # installs deps, copies .env, generates key, migrates, builds assets
+```
+
+**Run tests:**
+
+```powershell
+composer test
+```
+
+### Frontend architecture
+
+**UI Framework:** Tailwind CSS 3.x + TailwindPlus Elements (CDN for dialog/popover commands)
+
+**Custom Blade components** (in `resources/views/components/`):
+
+-   `<x-ecommerce-nav />` — sticky nav with mega menus, cart trigger, mobile drawer
+-   `<x-ecommerce-footer />` — responsive footer with newsletter form, social links
+-   `<x-shopping-cart />` — slide-out drawer with custom animations
+-   `<x-category-home />` — category cards with gradient overlays
+-   `<x-promo-section />` — promotional hero section ("Find Your Perfect Drive")
+-   `<x-partner-logos />` — car brand logos grid (Audi, BMW, Mercedes-Benz, etc.)
+
+**Critical patterns:**
+
+1. **TailwindPlus Elements usage** (loaded via CDN in `welcome.blade.php`):
+
+    - Use `command="show-modal"` and `commandfor="drawer"` to trigger dialogs
+    - Buttons must be `<button type="button">`, NOT `<a href="#">` (causes page jump)
+    - Custom elements: `<el-dialog>`, `<el-dialog-panel>`, `<el-dialog-backdrop>`, `<el-popover>`, `<el-tab-group>`
+
+2. **Custom animations** (`resources/css/app.css`):
+
+    - Shopping cart drawer uses CSS `@keyframes` + JS-triggered `.closing` class
+    - Drawer animations: `slideInFromRight` (300ms), `slideOutToRight` (250ms)
+    - Rotating text banner: `slideInFromTop` (600ms), `slideOutToBottom` (600ms)
+    - JS intercepts close clicks to delay actual close until animation completes (see `resources/js/app.js`)
+    - Rotating text: displays one message at a time, cycles every 3.6s (see `welcome.blade.php` banner)
+
+3. **Sticky footer pattern** (`resources/views/layouts/app.blade.php`, `welcome.blade.php`):
+
+    - Body: `min-h-screen flex flex-col`
+    - Main: `flex-1`
+    - Footer sits at bottom on short pages
+
+4. **Navigation positioning:**
+    - Nav is `sticky top-0 z-50` (not `fixed`)
+    - Desktop popovers use `anchor="bottom"` to appear under nav and scroll away
+    - Popover triggers wrapped in `relative` for positioning context
+
+### Docker & database
+
+-   **MySQL 8.0** runs in Docker (port 3306)
+-   **phpMyAdmin** at `http://localhost:8081` (bound to 127.0.0.1 for security)
+-   Default credentials: `ecommerce` / `ecommerce_pass` (see `docker-compose.yml`)
+-   Start: `docker compose up -d`
+
+### Testing & CI
+
+-   Tests use in-memory SQLite (`phpunit.xml` sets `DB_CONNECTION=sqlite`, `QUEUE_CONNECTION=sync`)
+-   No external mail/queue/db in tests
+-   Run with `composer test` or `php artisan test`
+
+### Asset pipeline
+
+-   **Dev:** `npm run dev` (Vite watches and hot-reloads CSS/JS)
+-   **Prod:** `npm run build` (outputs to `public/build/` with manifest)
+-   Commit `public/build/` files if deploying without build step
+
+### Code conventions
+
+-   **Auth:** Laravel Breeze scaffolding (follow its patterns for auth flows)
+-   **Password hashing:** Use Eloquent `casts()` with `['password' => 'hashed']`
+-   **Factories over seeders:** Use `Database\\Factories` for test data
+-   **Config:** Wire external services through `config/*.php` + `.env` (never hardcode secrets)
+
+### PR checklist
+
+1. Run `composer test` and fix failures
+2. If assets changed, run `npm run build` and include `public/build/` output
+3. Update routes (`routes/web.php`) and controllers for new endpoints
+4. Add new `.env` keys to `config/*.php` defaults
+
+### Examples
+
+**Route:**
+
+```php
+Route::get('/', function () { return view('welcome'); });
+```
+
+**Blade component usage:**
+
+```blade
+<x-ecommerce-nav />
+<x-shopping-cart />  <!-- Must be in DOM for cart button to work -->
+```
+
+**Dialog trigger (correct):**
+
+```blade
+<button type="button" command="show-modal" commandfor="drawer">Open Cart</button>
+```
+
+**Dialog trigger (wrong - causes page jump):**
+
+```blade
+<a href="#" command="show-modal" commandfor="drawer">Open Cart</a>
+```

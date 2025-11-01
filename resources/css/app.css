@@ -1,3 +1,121 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+    /* Shopping cart drawer animations */
+    @keyframes slideInFromRight {
+        from {
+            transform: translateX(100%);
+        }
+        to {
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes slideOutToRight {
+        from {
+            transform: translateX(0);
+        }
+        to {
+            transform: translateX(100%);
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+
+    /* Apply animations to drawer elements */
+    dialog[id="drawer"] .drawer-panel {
+        transform: translateX(100%);
+    }
+
+    dialog[id="drawer"][open] .drawer-panel {
+        animation: slideInFromRight 0.3s ease-out forwards;
+        transform: translateX(0);
+    }
+
+    dialog[id="drawer"].closing .drawer-panel {
+        animation: slideOutToRight 0.25s ease-in forwards;
+    }
+
+    dialog[id="drawer"] .drawer-backdrop {
+        opacity: 0;
+    }
+
+    dialog[id="drawer"][open] .drawer-backdrop {
+        animation: fadeIn 0.3s ease-out forwards;
+        opacity: 1;
+    }
+
+    dialog[id="drawer"].closing .drawer-backdrop {
+        animation: fadeOut 0.25s ease-in forwards;
+    }
+
+    /* Rotating text animations */
+    @keyframes slideInFromTop {
+        from {
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOutToBottom {
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+    }
+
+    .rotating-text-container {
+        position: relative;
+        min-height: 3.5em;
+        overflow: visible;
+        width: 100%;
+        display: flex;
+        align-items: center;
+    }
+
+    .rotating-text {
+        position: absolute;
+        width: 100%;
+        opacity: 0;
+        transform: translateY(-100%);
+        white-space: normal;
+        line-height: 1.5;
+        font-size: larger;
+    }
+
+    .rotating-text.active {
+        animation: slideInFromTop 0.6s ease-out forwards;
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .rotating-text.exiting {
+        animation: slideOutToBottom 0.6s ease-in forwards;
+    }
+}
