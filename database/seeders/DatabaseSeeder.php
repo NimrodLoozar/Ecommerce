@@ -30,6 +30,8 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             ConditionSeeder::class,
             FeatureSeeder::class,
+            CarModelSeeder::class,
+            CarSeeder::class,
         ]);
 
         $this->command->info('Phase 1 seeding completed successfully!');

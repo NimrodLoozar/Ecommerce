@@ -93,8 +93,9 @@
         </div>
     </banner>
     <main class="flex-1 w-full mx-auto">
-        <x-category-home />
+        <x-category-home :brands="$brands ?? collect()" />
         <x-promo-section />
+        <x-product-list :cars="$featuredCars ?? collect()" title="Featured Cars" />
         <x-partner-logos />
     </main>
 

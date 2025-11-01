@@ -41,6 +41,7 @@ class Car extends Model
         'views_count',
         'meta_title',
         'meta_description',
+        'api_data',
     ];
 
     protected function casts(): array
@@ -57,6 +58,7 @@ class Car extends Model
             'stock_quantity' => 'integer',
             'is_featured' => 'boolean',
             'views_count' => 'integer',
+            'api_data' => 'array',
         ];
     }
 

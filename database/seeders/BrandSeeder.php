@@ -14,26 +14,30 @@ class BrandSeeder extends Seeder
     public function run(): void
     {
         $brands = [
-            ['name' => 'Audi', 'sort_order' => 1],
-            ['name' => 'BMW', 'sort_order' => 2],
-            ['name' => 'Mercedes-Benz', 'sort_order' => 3],
-            ['name' => 'Volkswagen', 'sort_order' => 4],
-            ['name' => 'Toyota', 'sort_order' => 5],
-            ['name' => 'Honda', 'sort_order' => 6],
-            ['name' => 'Ford', 'sort_order' => 7],
-            ['name' => 'Chevrolet', 'sort_order' => 8],
-            ['name' => 'Nissan', 'sort_order' => 9],
-            ['name' => 'Hyundai', 'sort_order' => 10],
-            ['name' => 'Kia', 'sort_order' => 11],
-            ['name' => 'Mazda', 'sort_order' => 12],
-            ['name' => 'Subaru', 'sort_order' => 13],
-            ['name' => 'Volvo', 'sort_order' => 14],
-            ['name' => 'Lexus', 'sort_order' => 15],
-            ['name' => 'Porsche', 'sort_order' => 16],
-            ['name' => 'Tesla', 'sort_order' => 17],
-            ['name' => 'Citroën', 'sort_order' => 18],
-            ['name' => 'Peugeot', 'sort_order' => 19],
-            ['name' => 'Renault', 'sort_order' => 20],
+            // Brands with actual images in public/img/
+            ['name' => 'Renault', 'image' => 'img/renault.webp', 'sort_order' => 1],
+            ['name' => 'BMW', 'image' => 'img/BMW.webp', 'sort_order' => 2],
+            ['name' => 'Audi', 'image' => 'img/audi.avif', 'sort_order' => 3],
+            ['name' => 'Peugeot', 'image' => 'img/peugeot.jpg', 'sort_order' => 4],
+            ['name' => 'Mercedes-Benz', 'image' => 'img/mercedes.avif', 'sort_order' => 5],
+            ['name' => 'Lynk & Co', 'image' => 'img/link&co.jpg', 'sort_order' => 6],
+            ['name' => 'Citroën', 'image' => 'img/citroen.avif', 'sort_order' => 7],
+
+            // Other brands without specific images (will use logo from svg folder or default)
+            ['name' => 'Volkswagen', 'image' => null, 'sort_order' => 8],
+            ['name' => 'Toyota', 'image' => null, 'sort_order' => 9],
+            ['name' => 'Honda', 'image' => null, 'sort_order' => 10],
+            ['name' => 'Ford', 'image' => null, 'sort_order' => 11],
+            ['name' => 'Chevrolet', 'image' => null, 'sort_order' => 12],
+            ['name' => 'Nissan', 'image' => null, 'sort_order' => 13],
+            ['name' => 'Hyundai', 'image' => null, 'sort_order' => 14],
+            ['name' => 'Kia', 'image' => null, 'sort_order' => 15],
+            ['name' => 'Mazda', 'image' => null, 'sort_order' => 16],
+            ['name' => 'Subaru', 'image' => null, 'sort_order' => 17],
+            ['name' => 'Volvo', 'image' => null, 'sort_order' => 18],
+            ['name' => 'Lexus', 'image' => null, 'sort_order' => 19],
+            ['name' => 'Porsche', 'image' => null, 'sort_order' => 20],
+            ['name' => 'Tesla', 'image' => null, 'sort_order' => 21],
         ];
 
         foreach ($brands as $brand) {
@@ -41,6 +45,7 @@ class BrandSeeder extends Seeder
                 'name' => $brand['name'],
                 'slug' => Str::slug($brand['name']),
                 'logo' => 'brands/' . Str::slug($brand['name']) . '.png',
+                'image' => $brand['image'], // Category/showcase image
                 'description' => 'Premium ' . $brand['name'] . ' vehicles with quality and performance.',
                 'is_active' => true,
                 'sort_order' => $brand['sort_order'],

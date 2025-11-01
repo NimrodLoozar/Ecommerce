@@ -18,7 +18,7 @@
 
 <body class="font-sans antialiased">
     <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
-        @include('layouts.navigation')
+        @include('components.ecommerce-nav')
 
         <!-- Page Heading -->
         @isset($header)

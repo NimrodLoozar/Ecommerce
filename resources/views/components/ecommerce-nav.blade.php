@@ -245,12 +245,25 @@
                     </div>
 
                     <div class="space-y-6 border-t border-gray-200 px-4 py-6">
-                        <div class="flow-root">
-                            <a href="#" class="-m-2 block p-2 font-medium text-gray-900">Sign in</a>
-                        </div>
-                        <div class="flow-root">
-                            <a href="#" class="-m-2 block p-2 font-medium text-gray-900">Create account</a>
-                        </div>
+                        @auth
+                            <div class="flow-root">
+                                <a href="{{ route('orders.index') }}" class="-m-2 block p-2 font-medium text-gray-900">My
+                                    Orders</a>
+                            </div>
+                            <div class="flow-root">
+                                <a href="{{ url('/dashboard') }}"
+                                    class="-m-2 block p-2 font-medium text-gray-900">Dashboard</a>
+                            </div>
+                        @else
+                            <div class="flow-root">
+                                <a href="{{ route('login') }}" class="-m-2 block p-2 font-medium text-gray-900">Sign
+                                    in</a>
+                            </div>
+                            <div class="flow-root">
+                                <a href="{{ route('register') }}" class="-m-2 block p-2 font-medium text-gray-900">Create
+                                    account</a>
+                            </div>
+                        @endauth
                     </div>
 
                     <div class="border-t border-gray-200 px-4 py-6">
@@ -287,7 +300,7 @@
 
                     <!-- Logo -->
                     <div class="ml-4 flex lg:ml-0">
-                        <a href="#">
+                        <a href="/">
                             <span class="sr-only">Your Company</span>
                             <img src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
                                 alt="" class="h-8 w-auto" />
@@ -592,6 +605,9 @@
 
                     <div class="hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:space-x-6">
                         @auth
+                            <a href="{{ route('orders.index') }}"
+                                class="text-sm font-medium text-gray-700 hover:text-gray-800">My Orders</a>
+                            <span aria-hidden="true" class="h-6 w-px bg-gray-200"></span>
                             <a href="{{ url('/dashboard') }}"
                                 class="text-sm font-medium text-gray-700 hover:text-gray-800">Dashboard</a>
                         @else
