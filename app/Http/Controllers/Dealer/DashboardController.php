@@ -45,7 +45,7 @@ class DashboardController extends Controller
             ->whereHas('orderItems.car', function ($query) use ($dealer) {
                 $query->where('dealer_id', $dealer->id);
             })
-            ->sum('total_amount');
+            ->sum('total');
 
         // Get pending inquiries
         $pendingInquiries = Inquiry::whereHas('car', function ($query) use ($dealer) {
@@ -66,7 +66,7 @@ class DashboardController extends Controller
             ->get();
 
         // Get total views on dealer's cars
-        $totalViews = Car::where('dealer_id', $dealer->id)->sum('views');
+        $totalViews = Car::where('dealer_id', $dealer->id)->sum('views_count');
 
         return view('dealer.dashboard', compact(
             'dealer',

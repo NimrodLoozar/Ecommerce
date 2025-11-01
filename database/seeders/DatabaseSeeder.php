@@ -45,5 +45,11 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->command->info('Phase 5 seeding completed successfully!');
+
+        // Seed Dealer data
+        $this->call([
+            DealerSeeder::class,
+        ]);
+        $this->command->info('Dealer seeding completed successfully!');
     }
 }

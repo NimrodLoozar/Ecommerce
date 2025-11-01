@@ -63,6 +63,14 @@ class DealerProfile extends Model
     }
 
     /**
+     * Get all cars for this dealer.
+     */
+    public function cars(): HasMany
+    {
+        return $this->hasMany(Car::class, 'dealer_id');
+    }
+
+    /**
      * Get all commissions for this dealer.
      */
     public function commissions(): HasMany

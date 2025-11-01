@@ -2,6 +2,20 @@
 
 This is a Laravel 12 (PHP 8.2) ecommerce application for selling and leasing new and used cars from various brands. Built with Vite + Tailwind CSS for frontend. The codebase follows PSR-4 with `App\\` namespace mapped to `app/`.
 
+### Project Status (November 1, 2025)
+
+**Phase:** Building dealer inventory management interface
+**Progress:** 20/78 views complete (26%)
+
+-   ✅ Public customer-facing pages (homepage, listings, car details, brands)
+-   ✅ Shopping cart, checkout, and order management
+-   ✅ Address management
+-   ✅ Dealer dashboard with statistics
+-   🔄 **IN PROGRESS:** Dealer car inventory management (create/edit/list)
+-   ⏳ Dealer orders and analytics
+-   ⏳ Admin control panel
+-   ⏳ Wishlist and advanced search
+
 ### Key directories
 
 -   `composer.json` — scripts: `setup`, `dev`, `test` (use these for consistent workflows)
@@ -53,12 +67,18 @@ composer test
 
 **Custom Blade components** (in `resources/views/components/`):
 
--   `<x-ecommerce-nav />` — sticky nav with mega menus, cart trigger, mobile drawer
+-   `<x-ecommerce-nav />` — sticky nav with mega menus, cart trigger, mobile drawer, logout button
 -   `<x-ecommerce-footer />` — responsive footer with newsletter form, social links
 -   `<x-shopping-cart />` — slide-out drawer with custom animations
--   `<x-category-home />` — category cards with gradient overlays
+-   `<x-category-home />` — category cards with gradient overlays (homepage)
+-   `<x-product-list />` — featured cars grid (homepage)
 -   `<x-promo-section />` — promotional hero section ("Find Your Perfect Drive")
 -   `<x-partner-logos />` — car brand logos grid (Audi, BMW, Mercedes-Benz, etc.)
+
+**Reusable partials** (in `resources/views/*/partials/`):
+
+-   `cars/partials/car-card.blade.php` — car card with image, price, specs
+-   `cars/partials/filters-form.blade.php` — advanced filter sidebar for car listings
 
 **Critical patterns:**
 
@@ -112,6 +132,37 @@ composer test
 -   **Password hashing:** Use Eloquent `casts()` with `['password' => 'hashed']`
 -   **Factories over seeders:** Use `Database\\Factories` for test data
 -   **Config:** Wire external services through `config/*.php` + `.env` (never hardcode secrets)
+
+### User roles & access
+
+-   **Customer:** Regular user who can browse, purchase, and manage orders
+-   **Dealer:** User with `dealerProfile` relationship (approved dealer account)
+    -   Test account: `dealer@example.com` / `password`
+    -   Company: Premium Auto Sales
+    -   Access to `/dealer/*` routes
+-   **Admin:** System administrator (not yet implemented)
+
+**Navigation logic:**
+
+-   If user has `dealerProfile`: Show "Dealer Dashboard", "My Inventory", "My Orders"
+-   If regular user: Show "Dashboard", "My Orders"
+-   Always show logout button (red, POST form with CSRF)
+
+### Database schema notes
+
+**Important columns:**
+
+-   `cars.dealer_id` — Foreign key to `dealer_profiles.id` (nullable)
+-   `cars.user_id` — User who created the listing (dealer or admin)
+-   `orders.total` — Order total (NOT `total_amount`)
+-   `cars.views_count` — View counter (NOT `views`)
+-   Order has `orderItems()` alias method (points to `items()`)
+
+**Relationships:**
+
+-   `Car::dealer()` — BelongsTo DealerProfile
+-   `DealerProfile::cars()` — HasMany Car
+-   `Order::orderItems()` — Alias for items() relationship
 
 ### PR checklist
 

@@ -19,6 +19,7 @@ class Car extends Model
         'category_id',
         'condition_id',
         'user_id',
+        'dealer_id',
         'vin',
         'title',
         'slug',
@@ -100,6 +101,14 @@ class Car extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the dealer profile associated with this car.
+     */
+    public function dealer(): BelongsTo
+    {
+        return $this->belongsTo(DealerProfile::class, 'dealer_id');
     }
 
     /**

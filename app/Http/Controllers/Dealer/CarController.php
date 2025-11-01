@@ -28,7 +28,7 @@ class CarController extends Controller
         }
 
         $cars = Car::where('dealer_id', $dealer->id)
-            ->with(['brand', 'carModel', 'category', 'condition'])
+            ->with(['brand', 'carModel', 'category', 'condition', 'images'])
             ->latest()
             ->paginate(15);
 

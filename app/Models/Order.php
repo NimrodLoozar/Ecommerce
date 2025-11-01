@@ -61,6 +61,14 @@ class Order extends Model
     }
 
     /**
+     * Alias for items() relationship.
+     */
+    public function orderItems(): HasMany
+    {
+        return $this->items();
+    }
+
+    /**
      * Get the billing address.
      */
     public function billingAddress(): BelongsTo
