@@ -1,4 +1,4 @@
-<div class="relative overflow-hidden bg-gradient-to-t from-blue-400/60 to-transparent">
+<div class="relative overflow-hidden bg-gradient-to-t from-blue-400/60 to-transparent py-32">
     <div class="pt-16 pb-80 sm:pt-24 sm:pb-40 lg:pt-40 lg:pb-48">
         <div class="relative mx-auto max-w-7xl px-4 sm:static sm:px-6 lg:px-8">
             <div class="sm:max-w-lg">
