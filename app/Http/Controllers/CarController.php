@@ -108,6 +108,9 @@ class CarController extends Controller
         // Increment view count
         $car->increment('views_count');
 
+        // Get images from filesystem
+        $filesystemImages = $car->getFilesystemImages();
+
         // Get similar cars (same brand or category)
         $similarCars = Car::with(['brand', 'carModel', 'images'])
             ->available()
@@ -123,6 +126,6 @@ class CarController extends Controller
         // Calculate average rating
         $averageRating = $car->reviews()->approved()->avg('rating');
 
-        return view('cars.show', compact('car', 'similarCars', 'averageRating'));
+        return view('cars.show', compact('car', 'similarCars', 'averageRating', 'filesystemImages'));
     }
 }

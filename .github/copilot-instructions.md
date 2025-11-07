@@ -2,15 +2,16 @@
 
 This is a Laravel 12 (PHP 8.2) ecommerce application for selling and leasing new and used cars from various brands. Built with Vite + Tailwind CSS for frontend. The codebase follows PSR-4 with `App\\` namespace mapped to `app/`.
 
-### Project Status (November 1, 2025)
+### Project Status (November 7, 2025)
 
 **Phase:** Building dealer inventory management interface
-**Progress:** 20/78 views complete (26%)
+**Progress:** 22/78 views complete (28%)
 
--   ✅ Public customer-facing pages (homepage, listings, car details, brands)
+-   ✅ Public customer-facing pages (homepage, listings, car details with image gallery, brands)
 -   ✅ Shopping cart, checkout, and order management
 -   ✅ Address management
 -   ✅ Dealer dashboard with statistics
+-   ✅ Image gallery with lightbox (filesystem-based)
 -   🔄 **IN PROGRESS:** Dealer car inventory management (create/edit/list)
 -   ⏳ Dealer orders and analytics
 -   ⏳ Admin control panel
@@ -42,12 +43,16 @@ php -S localhost:8000 -t public
 npm run dev
 ```
 
+**Access application:** Visit `http://localhost:5173` (Vite proxies to Laravel backend)
+
 Or use Docker for database + direct PHP server (recommended):
 
 ```powershell
 docker compose up -d  # MySQL + phpMyAdmin
 npm run dev           # Vite hot reload in separate terminal
 ```
+
+**Vite configuration:** `vite.config.js` includes proxy to forward requests to `localhost:8000`
 
 **Setup from scratch:**
 
@@ -163,6 +168,40 @@ composer test
 -   `Car::dealer()` — BelongsTo DealerProfile
 -   `DealerProfile::cars()` — HasMany Car
 -   `Order::orderItems()` — Alias for items() relationship
+
+**Car images:** Images are stored in filesystem, not database. Path structure: `public/img/{BrandName}/{Year BrandName ModelName}/`
+
+-   `Car::getFilesystemImages()` method scans folders and returns array of image paths
+-   Supports multiple folder name variations (e.g., "Megane" vs "Megan", "E-Tech" suffix)
+-   Used in `CarController@show` and passed to view as `$filesystemImages`
+
+### Image gallery system
+
+**Location:** `resources/views/cars/show.blade.php`
+
+-   **Alpine.js component:** `imageGallery()` manages state and navigation
+-   **Thumbnail grid:** Click to select image, highlights current selection
+-   **Main image:** Shows current image with navigation arrows on hover
+-   **Lightbox modal:** Click main image to open full-screen view
+-   **Keyboard navigation:** Arrow keys (←/→) and ESC work in lightbox
+-   **Image counter:** Shows "X / Y" on both main view and lightbox
+
+**Key files:**
+
+-   `app/Models/Car.php` — `getFilesystemImages()` method
+-   `app/Http/Controllers/CarController.php` — passes `$filesystemImages` to view
+-   `resources/css/app.css` — `[x-cloak]` rule for Alpine.js
+
+**Folder structure example:**
+
+```
+public/img/Renault/
+  ├── 2024 Renault Clio/
+  │   ├── image1.jpg
+  │   └── image2.jpg
+  └── 2022 Renault Megane E-Tech/
+      └── image1.jpg
+```
 
 ### PR checklist
 

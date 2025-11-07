@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 @layer utilities {
+    /* Hide elements before Alpine.js initializes */
+    [x-cloak] {
+        display: none !important;
+    }
+
     /* Shopping cart drawer animations */
     @keyframes slideInFromRight {
         from {

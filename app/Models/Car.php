@@ -278,4 +278,58 @@ class Car extends Model
     {
         return $this->approvedReviews()->count();
     }
+
+    /**
+     * Get images from the filesystem based on brand and title.
+     * Returns an array of image paths relative to public directory.
+     */
+    public function getFilesystemImages(): array
+    {
+        $images = [];
+        
+        $brandName = $this->brand->name;
+        $modelName = $this->carModel->name;
+        $year = $this->year;
+        
+        // Try different folder name variations
+        $possibleFolders = [
+            // Exact match: "Year Brand Model"
+            "{$year} {$brandName} {$modelName}",
+            // Try with E-Tech suffix for electric Megane
+            "{$year} {$brandName} {$modelName} E-Tech",
+            // Try alternate spelling (Megan vs Megane)
+            "{$year} {$brandName} " . rtrim($modelName, 'e'),
+        ];
+        
+        $folderPath = null;
+        $relativePath = null;
+        
+        // Find the first matching folder
+        foreach ($possibleFolders as $folderName) {
+            $testPath = public_path("img/{$brandName}/{$folderName}");
+            if (file_exists($testPath) && is_dir($testPath)) {
+                $folderPath = $testPath;
+                $relativePath = "img/{$brandName}/{$folderName}";
+                break;
+            }
+        }
+        
+        // If no folder found, return empty array
+        if (!$folderPath) {
+            return $images;
+        }
+
+        // Get all image files from the directory
+        $files = scandir($folderPath);
+        
+        foreach ($files as $file) {
+            // Check if it's an image file (jpg, jpeg, png, webp, avif)
+            if (preg_match('/\.(jpg|jpeg|png|webp|avif)$/i', $file)) {
+                // Store the relative path from public directory
+                $images[] = $relativePath . '/' . $file;
+            }
+        }
+        
+        return $images;
+    }
 }

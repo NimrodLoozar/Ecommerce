@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Brand;
 use App\Models\Car;
 use App\Models\CarModel;
 use App\Models\Category;
@@ -27,88 +28,149 @@ class CarSeeder extends Seeder
         );
 
         // Get categories and conditions
-        $sedan = Category::where('slug', 'sedan')->first();
-        $suv = Category::where('slug', 'suv')->first();
         $hatchback = Category::where('slug', 'hatchback')->first();
-        $electric = Category::where('slug', 'electric')->first();
+        $suv = Category::where('slug', 'suv')->first();
 
         $new = Condition::where('slug', 'new')->first();
         $used = Condition::where('slug', 'used')->first();
-        $certified = Condition::where('slug', 'certified-pre-owned')->first();
 
-        // Get car models with their brands
-        $models = CarModel::with('brand')->get();
+        // Get Renault brand and its models
+        $renault = Brand::where('name', 'Renault')->first();
+        
+        // Define the 5 specific Renault cars based on folder structure
+        $renaultCars = [
+            [
+                'model_name' => 'Clio',
+                'year' => 2024,
+                'condition' => $new,
+                'category' => $hatchback,
+                'price' => 24500,
+                'mileage' => 15,
+                'fuel_type' => 'petrol',
+                'transmission' => 'manual',
+                'engine_size' => 1.0,
+                'horsepower' => 90,
+                'doors' => 5,
+                'seats' => 5,
+                'exterior_color' => 'Blue',
+                'interior_color' => 'Black',
+                'description' => 'Brand new 2024 Renault Clio with modern design and excellent fuel economy. Perfect city car with advanced safety features and comfortable interior. Ideal for urban driving with responsive handling.',
+                'image_folder' => '2024 Renault Clio',
+            ],
+            [
+                'model_name' => 'Captur',
+                'year' => 2024,
+                'condition' => $new,
+                'category' => $suv,
+                'price' => 28900,
+                'mileage' => 50,
+                'fuel_type' => 'hybrid',
+                'transmission' => 'automatic',
+                'engine_size' => 1.6,
+                'horsepower' => 145,
+                'doors' => 5,
+                'seats' => 5,
+                'exterior_color' => 'Orange',
+                'interior_color' => 'Gray',
+                'description' => 'New 2024 Renault Captur hybrid SUV with spacious interior and modern technology. Features efficient hybrid powertrain, elevated driving position, and versatile cargo space.',
+                'image_folder' => '2024 Renault Captur',
+            ],
+            [
+                'model_name' => 'Megane',
+                'year' => 2022,
+                'condition' => $used,
+                'category' => $hatchback,
+                'price' => 32500,
+                'mileage' => 12000,
+                'fuel_type' => 'electric',
+                'transmission' => 'automatic',
+                'engine_size' => 0.0,
+                'horsepower' => 217,
+                'doors' => 5,
+                'seats' => 5,
+                'exterior_color' => 'White',
+                'interior_color' => 'Black',
+                'description' => '2022 Renault Megane E-Tech electric with low mileage. Fully electric with impressive range, advanced driver assistance systems, and premium interior. Environmentally friendly with zero emissions.',
+                'image_folder' => '2022 Renault Megane E-Tech',
+            ],
+            [
+                'model_name' => 'Megane',
+                'year' => 2019,
+                'condition' => $used,
+                'category' => $hatchback,
+                'price' => 16500,
+                'mileage' => 45000,
+                'fuel_type' => 'diesel',
+                'transmission' => 'manual',
+                'engine_size' => 1.5,
+                'horsepower' => 115,
+                'doors' => 5,
+                'seats' => 5,
+                'exterior_color' => 'Silver',
+                'interior_color' => 'Gray',
+                'description' => 'Well-maintained 2019 Renault Megane diesel with excellent fuel economy. Reliable and efficient with comfortable ride quality. Great value family hatchback with good service history.',
+                'image_folder' => '2019 Renault Megan',
+            ],
+            [
+                'model_name' => 'Scenic',
+                'year' => 2018,
+                'condition' => $used,
+                'category' => $suv,
+                'price' => 14900,
+                'mileage' => 68000,
+                'fuel_type' => 'petrol',
+                'transmission' => 'automatic',
+                'engine_size' => 1.3,
+                'horsepower' => 140,
+                'doors' => 5,
+                'seats' => 7,
+                'exterior_color' => 'Black',
+                'interior_color' => 'Beige',
+                'description' => '2018 Renault Scenic 7-seater MPV with spacious interior. Perfect family car with practical seating arrangement, ample storage space, and comfortable ride for long journeys.',
+                'image_folder' => '2018 Renault Scenic',
+            ],
+        ];
 
         $cars = [];
 
-        foreach ($models->take(30) as $index => $model) {
-            // Determine category based on model name/type
-            $modelName = strtolower($model->name);
-            $category = $sedan; // default
+        foreach ($renaultCars as $index => $carData) {
+            // Get the car model
+            $model = CarModel::where('brand_id', $renault->id)
+                            ->where('name', $carData['model_name'])
+                            ->first();
 
-            if (str_contains($modelName, 'x') || str_contains($modelName, 'suv') || in_array($model->name, ['Captur', 'Tiguan', 'RAV4', 'Highlander', 'Q3', 'Q5', 'GLC', 'GLE', '3008', '5008', 'C5 Aircross'])) {
-                $category = $suv;
-            } elseif (in_array($model->name, ['Clio', 'Golf', '208', 'C3', 'C4'])) {
-                $category = $hatchback;
+            if (!$model) {
+                $this->command->warn("Model {$carData['model_name']} not found, skipping...");
+                continue;
             }
 
-            // Randomize specs
-            $year = rand(2018, 2024);
-            $isNew = $year >= 2023;
-            $condition = $isNew ? $new : ($index % 3 == 0 ? $certified : $used);
-
-            $fuelTypes = ['petrol', 'diesel', 'electric', 'hybrid', 'plugin_hybrid'];
-            $fuelType = $model->name === 'ID.4' || $model->name === 'iX' || $model->name === 'e-tron' || $model->name === 'EQC' || str_contains($model->name, 'Model')
-                ? 'electric'
-                : $fuelTypes[array_rand($fuelTypes)];
-
-            $transmissions = ['manual', 'automatic', 'semi_automatic'];
-            $transmission = $fuelType === 'electric' ? 'automatic' : $transmissions[array_rand($transmissions)];
-
-            $colors = ['Black', 'White', 'Silver', 'Blue', 'Red', 'Gray', 'Green'];
-            $exteriorColor = $colors[array_rand($colors)];
-            $interiorColor = $colors[array_rand($colors)];            // Price based on brand, year, and condition
-            $basePrice = match($model->brand->name) {
-                'Mercedes-Benz', 'BMW', 'Audi', 'Porsche', 'Tesla' => rand(35000, 85000),
-                'Volkswagen', 'Toyota', 'Mazda', 'Subaru', 'Volvo' => rand(20000, 45000),
-                'Renault', 'Peugeot', 'Citroën' => rand(15000, 35000),
-                default => rand(18000, 40000),
-            };
-
-            $yearFactor = ($year - 2018) / 6; // 0 to 1
-            $price = round($basePrice * (0.5 + $yearFactor * 0.5), -2);
-
-            $mileage = $isNew ? rand(10, 100) : rand(5000, 150000);
-
             $cars[] = [
-                'brand_id' => $model->brand_id,
+                'brand_id' => $renault->id,
                 'car_model_id' => $model->id,
-                'category_id' => $category?->id ?? $sedan->id,
-                'condition_id' => $condition?->id ?? $used->id,
+                'category_id' => $carData['category']->id,
+                'condition_id' => $carData['condition']->id,
                 'user_id' => $dealer->id,
-                'title' => $year . ' ' . $model->brand->name . ' ' . $model->name,
-                'slug' => Str::slug($year . '-' . $model->brand->name . '-' . $model->name . '-' . $index),
-                'description' => 'Well-maintained ' . $model->brand->name . ' ' . $model->name . ' with ' . $fuelType . ' engine. ' .
-                               'Features include premium interior, advanced safety systems, and excellent fuel economy. ' .
-                               'Perfect for city driving and long journeys.',
-                'vin' => strtoupper(substr(md5($model->id . $index), 0, 17)),
-                'year' => $year,
-                'price' => $price,
-                'mileage' => $mileage,
-                'fuel_type' => $fuelType,
-                'transmission' => $transmission,
-                'engine_size' => $fuelType === 'electric' ? '0.0' : (rand(10, 30) / 10),
-                'horsepower' => $fuelType === 'electric' ? rand(150, 400) : rand(90, 300),
-                'doors' => rand(3, 5),
-                'seats' => rand(4, 7),
-                'exterior_color' => $exteriorColor,
-                'interior_color' => $interiorColor,
-                'stock_quantity' => rand(1, 5),
+                'title' => $carData['year'] . ' Renault ' . $carData['model_name'],
+                'slug' => Str::slug($carData['year'] . '-renault-' . $carData['model_name']),
+                'description' => $carData['description'],
+                'vin' => strtoupper(substr(md5('renault-' . $carData['model_name'] . '-' . $carData['year']), 0, 17)),
+                'year' => $carData['year'],
+                'price' => $carData['price'],
+                'mileage' => $carData['mileage'],
+                'fuel_type' => $carData['fuel_type'],
+                'transmission' => $carData['transmission'],
+                'engine_size' => $carData['engine_size'],
+                'horsepower' => $carData['horsepower'],
+                'doors' => $carData['doors'],
+                'seats' => $carData['seats'],
+                'exterior_color' => $carData['exterior_color'],
+                'interior_color' => $carData['interior_color'],
+                'stock_quantity' => 1,
                 'status' => 'available',
-                'is_featured' => $index % 4 == 0, // 25% featured
-                'views_count' => rand(10, 500),
-                'created_at' => now()->subDays(rand(1, 90)),
-                'updated_at' => now()->subDays(rand(0, 30)),
+                'is_featured' => $index < 2, // First 2 are featured
+                'views_count' => rand(50, 300),
+                'created_at' => now()->subDays(rand(1, 30)),
+                'updated_at' => now()->subDays(rand(0, 15)),
             ];
         }
 
@@ -116,6 +178,6 @@ class CarSeeder extends Seeder
             Car::create($carData);
         }
 
-        $this->command->info('Created ' . count($cars) . ' cars.');
+        $this->command->info('Created ' . count($cars) . ' Renault cars.');
     }
 }
