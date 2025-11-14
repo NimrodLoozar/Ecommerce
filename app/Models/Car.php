@@ -291,7 +291,14 @@ class Car extends Model
         $modelName = $this->carModel->name;
         $year = $this->year;
         
-        // Try different folder name variations
+        // Try different brand folder name variations (for brands with special characters)
+        $brandFolderVariations = [
+            $brandName,                           // "Lynk & Co"
+            str_replace(' ', '', $brandName),     // "Lynk&Co" (remove spaces)
+            strtolower(str_replace(' ', '', $brandName)), // "lynk&co" (lowercase, no spaces)
+        ];
+        
+        // Try different subfolder name variations
         $possibleFolders = [
             // Exact match: "Year Brand Model"
             "{$year} {$brandName} {$modelName}",
@@ -299,18 +306,23 @@ class Car extends Model
             "{$year} {$brandName} {$modelName} E-Tech",
             // Try alternate spelling (Megan vs Megane)
             "{$year} {$brandName} " . rtrim($modelName, 'e'),
+            // Try with Update suffix
+            "{$year} {$brandName} {$modelName} Update",
         ];
         
         $folderPath = null;
         $relativePath = null;
         
-        // Find the first matching folder
-        foreach ($possibleFolders as $folderName) {
-            $testPath = public_path("img/{$brandName}/{$folderName}");
-            if (file_exists($testPath) && is_dir($testPath)) {
-                $folderPath = $testPath;
-                $relativePath = "img/{$brandName}/{$folderName}";
-                break;
+        // Try each brand folder variation
+        foreach ($brandFolderVariations as $brandFolder) {
+            // Find the first matching folder
+            foreach ($possibleFolders as $folderName) {
+                $testPath = public_path("img/{$brandFolder}/{$folderName}");
+                if (file_exists($testPath) && is_dir($testPath)) {
+                    $folderPath = $testPath;
+                    $relativePath = "img/{$brandFolder}/{$folderName}";
+                    break 2; // Break out of both loops
+                }
             }
         }
         

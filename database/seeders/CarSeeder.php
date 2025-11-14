@@ -36,6 +36,7 @@ class CarSeeder extends Seeder
 
         // Get Renault brand and its models
         $renault = Brand::where('name', 'Renault')->first();
+        $linkCo = Brand::where('name', 'Lynk & Co')->first();
         
         // Define the 5 specific Renault cars based on folder structure
         $renaultCars = [
@@ -59,7 +60,7 @@ class CarSeeder extends Seeder
             ],
             [
                 'model_name' => 'Captur',
-                'year' => 2024,
+                'year' => 2025,
                 'condition' => $new,
                 'category' => $suv,
                 'price' => 28900,
@@ -76,7 +77,7 @@ class CarSeeder extends Seeder
                 'image_folder' => '2024 Renault Captur',
             ],
             [
-                'model_name' => 'Megane',
+                'model_name' => 'Megane E-Tech',
                 'year' => 2022,
                 'condition' => $used,
                 'category' => $hatchback,
@@ -112,22 +113,97 @@ class CarSeeder extends Seeder
                 'image_folder' => '2019 Renault Megan',
             ],
             [
-                'model_name' => 'Scenic',
-                'year' => 2018,
+                'model_name' => 'Grand Scenic',
+                'year' => 2010,
                 'condition' => $used,
                 'category' => $suv,
-                'price' => 14900,
-                'mileage' => 68000,
+                'price' => 8000,
+                'mileage' => 90000,
                 'fuel_type' => 'petrol',
-                'transmission' => 'automatic',
-                'engine_size' => 1.3,
-                'horsepower' => 140,
+                'transmission' => 'manual',
+                'engine_size' => 1.6,
+                'horsepower' => 110,
                 'doors' => 5,
                 'seats' => 7,
-                'exterior_color' => 'Black',
+                'exterior_color' => 'Red',
                 'interior_color' => 'Beige',
-                'description' => '2018 Renault Scenic 7-seater MPV with spacious interior. Perfect family car with practical seating arrangement, ample storage space, and comfortable ride for long journeys.',
-                'image_folder' => '2018 Renault Scenic',
+                'description' => 'Spacious 2010 Renault Grand Scenic with 7 seats, perfect for families. Reliable petrol engine with ample cargo space and comfortable interior. Great value for a practical family SUV.',
+                 'image_folder' => '2010 Renault Grand Scenic',
+            ],
+            [
+                'model_name' => 'Twizy',
+                'year' => 2012,
+                'condition' => $used,
+                'category' => $hatchback,
+                'price' => 6000,
+                'mileage' => 15000,
+                'fuel_type' => 'electric',
+                'transmission' => 'automatic',
+                'engine_size' => 0.0,
+                'horsepower' => 17,
+                'doors' => 2,
+                'seats' => 2,
+                'exterior_color' => 'Yellow',
+                'interior_color' => 'Black',
+                'description' => 'Compact 2012 Renault Twizy electric city car, ideal for urban commuting. Easy to park and maneuver with zero emissions. Fun and economical way to get around the city.',
+                'image_folder' => '2012 Renault Twizy',
+            ],
+            [
+                'model_name' => 'Laguna Estate',
+                'year' => 2011,
+                'condition' => $used,
+                'category' => $suv,
+                'price' => 7500,
+                'mileage' => 85000,
+                'fuel_type' => 'diesel',
+                'transmission' => 'manual',
+                'engine_size' => 2.0,
+                'horsepower' => 150,
+                'doors' => 5,
+                'seats' => 5,
+                'exterior_color' => 'Green',
+                'interior_color' => 'Black',
+                'description' => 'Reliable 2011 Renault Laguna Estate diesel with spacious cargo area. Perfect for families needing extra space. Comfortable ride with good fuel efficiency and solid performance.',
+                'image_folder' => '2011 Renault Laguna Estate',
+            ],
+        ];
+
+        $linkCoCars = [
+            [
+                'model_name' => '01',
+                'year' => 2018,
+                'condition' => $new,
+                'category' => $suv,
+                'price' => 32000,
+                'mileage' => 10,
+                'fuel_type' => 'plugin_hybrid',
+                'transmission' => 'automatic',
+                'engine_size' => 1.5,
+                'horsepower' => 180,
+                'doors' => 5,
+                'seats' => 5,
+                'exterior_color' => 'Black',
+                'interior_color' => 'Gray',
+                'description' => 'Brand new 2018 Lynk & Co 01 plug-in hybrid SUV with cutting-edge technology and stylish design. Offers a comfortable ride, advanced safety features, and eco-friendly driving experience.',
+                'image_folder' => '2018 Lynk & Co 01',
+            ],
+            [
+                'model_name' => '01 Update',
+                'year' => 2019,
+                'condition' => $used,
+                'category' => $suv,
+                'price' => 28000,
+                'mileage' => 20000,
+                'fuel_type' => 'hybrid',
+                'transmission' => 'automatic',
+                'engine_size' => 1.5,
+                'horsepower' => 160,
+                'doors' => 5,
+                'seats' => 5,
+                'exterior_color' => 'White',
+                'interior_color' => 'Black',
+                'description' => 'Well-maintained 2019 Lynk & Co 01 Update hybrid SUV with low mileage. Combines efficiency with performance, featuring a spacious interior and modern infotainment system.',
+                'image_folder' => '2019 Lynk & Co 01 Update',
             ],
         ];
 
@@ -174,10 +250,52 @@ class CarSeeder extends Seeder
             ];
         }
 
+        foreach ($linkCoCars as $index => $carData) {
+            // Get the car model
+            $model = CarModel::where('brand_id', $linkCo->id)
+                            ->where('name', $carData['model_name'])
+                            ->first();
+
+            if (!$model) {
+                $this->command->warn("Model {$carData['model_name']} not found, skipping...");
+                continue;
+            }
+
+            $cars[] = [
+                'brand_id' => $linkCo->id,
+                'car_model_id' => $model->id,
+                'category_id' => $carData['category']->id,
+                'condition_id' => $carData['condition']->id,
+                'user_id' => $dealer->id,
+                'title' => $carData['year'] . ' Lynk & Co ' . $carData['model_name'],
+                'slug' => Str::slug($carData['year'] . '-lynk-co-' . $carData['model_name']),
+                'description' => $carData['description'],
+                'vin' => strtoupper(substr(md5('lynkco-' . $carData['model_name'] . '-' . $carData['year']), 0, 17)),
+                'year' => $carData['year'],
+                'price' => $carData['price'],
+                'mileage' => $carData['mileage'],
+                'fuel_type' => $carData['fuel_type'],
+                'transmission' => $carData['transmission'],
+                'engine_size' => $carData['engine_size'],
+                'horsepower' => $carData['horsepower'],
+                'doors' => $carData['doors'],
+                'seats' => $carData['seats'],
+                'exterior_color' => $carData['exterior_color'],
+                'interior_color' => $carData['interior_color'],
+                'stock_quantity' => 1,
+                'status' => 'available',
+                'is_featured' => $index < 1, // First 1 is featured
+                'views_count' => rand(50, 300),
+                'created_at' => now()->subDays(rand(1, 30)),
+                'updated_at' => now()->subDays(rand(0, 15)),
+            ];
+        }
+
         foreach ($cars as $carData) {
             Car::create($carData);
         }
 
-        $this->command->info('Created ' . count($cars) . ' Renault cars.');
+        $this->command->info('Created ' . count($renaultCars) . ' Renault cars.');
+        $this->command->info('Created ' . count($linkCoCars) . ' Lynk & Co cars.');
     }
 }
