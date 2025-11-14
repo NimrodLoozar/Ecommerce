@@ -291,7 +291,14 @@ class Car extends Model
         $modelName = $this->carModel->name;
         $year = $this->year;
         
-        // Try different folder name variations
+        // Try different brand folder name variations (for brands with special characters)
+        $brandFolderVariations = [
+            $brandName,                           // "Lynk & Co"
+            str_replace(' ', '', $brandName),     // "Lynk&Co" (remove spaces)
+            strtolower(str_replace(' ', '', $brandName)), // "lynk&co" (lowercase, no spaces)
+        ];
+        
+        // Try different subfolder name variations
         $possibleFolders = [
             // Exact match: "Year Brand Model"
             "{$year} {$brandName} {$modelName}",
@@ -299,18 +306,23 @@ class Car extends Model
             "{$year} {$brandName} {$modelName} E-Tech",
             // Try alternate spelling (Megan vs Megane)
             "{$year} {$brandName} " . rtrim($modelName, 'e'),
+            // Try with Update suffix
+            "{$year} {$brandName} {$modelName} Update",
         ];
         
         $folderPath = null;
         $relativePath = null;
         
-        // Find the first matching folder
-        foreach ($possibleFolders as $folderName) {
-            $testPath = public_path("img/{$brandName}/{$folderName}");
-            if (file_exists($testPath) && is_dir($testPath)) {
-                $folderPath = $testPath;
-                $relativePath = "img/{$brandName}/{$folderName}";
-                break;
+        // Try each brand folder variation
+        foreach ($brandFolderVariations as $brandFolder) {
+            // Find the first matching folder
+            foreach ($possibleFolders as $folderName) {
+                $testPath = public_path("img/{$brandFolder}/{$folderName}");
+                if (file_exists($testPath) && is_dir($testPath)) {
+                    $folderPath = $testPath;
+                    $relativePath = "img/{$brandFolder}/{$folderName}";
+                    break 2; // Break out of both loops
+                }
             }
         }
         
@@ -331,5 +343,37 @@ class Car extends Model
         }
         
         return $images;
+    }
+
+    /**
+     * Get the cover image from filesystem.
+     * Searches for images with specific keywords (cover, main, thumbnail) in filename.
+     * Falls back to first image if no keyword match found.
+     * Returns the path to the cover image or null if no images found.
+     */
+    public function getCoverImage(): ?string
+    {
+        $images = $this->getFilesystemImages();
+        
+        if (empty($images)) {
+            return null;
+        }
+        
+        // Keywords to search for in image filenames (case-insensitive)
+        $coverKeywords = ['cover', 'main', 'thumbnail', 'thumb', 'primary'];
+        
+        // Search for an image with a cover keyword in its filename
+        foreach ($images as $imagePath) {
+            $filename = strtolower(basename($imagePath));
+            
+            foreach ($coverKeywords as $keyword) {
+                if (strpos($filename, $keyword) !== false) {
+                    return $imagePath;
+                }
+            }
+        }
+        
+        // If no cover image found, return the first image
+        return $images[0];
     }
 }

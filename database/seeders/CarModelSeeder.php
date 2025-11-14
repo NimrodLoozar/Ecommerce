@@ -18,8 +18,17 @@ class CarModelSeeder extends Seeder
             // Renault (ID: 1)
             ['brand_id' => 1, 'name' => 'Clio'],
             ['brand_id' => 1, 'name' => 'Megane'],
+            ['brand_id' => 1, 'name' => 'Megane E-Tech'],
             ['brand_id' => 1, 'name' => 'Captur'],
             ['brand_id' => 1, 'name' => 'Scenic'],
+            ['brand_id' => 1, 'name' => 'Grand Scenic'],
+            ['brand_id' => 1, 'name' => 'Kadjar'],
+            ['brand_id' => 1, 'name' => 'Talisman'],
+            ['brand_id' => 1, 'name' => 'Espace'],
+            ['brand_id' => 1, 'name' => 'Zoe'],
+            ['brand_id' => 1, 'name' => 'Twizy'],
+            ['brand_id' => 1, 'name' => 'Laguna Estate'],
+            
 
             // BMW (ID: 2)
             ['brand_id' => 2, 'name' => '3 Series'],
@@ -50,6 +59,7 @@ class CarModelSeeder extends Seeder
 
             // Lynk & Co (ID: 6)
             ['brand_id' => 6, 'name' => '01'],
+            ['brand_id' => 6, 'name' => '01 Update'],
             ['brand_id' => 6, 'name' => '02'],
             ['brand_id' => 6, 'name' => '03'],
 

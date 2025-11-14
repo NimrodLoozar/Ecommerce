@@ -1,8 +1,11 @@
 @php
-    $primaryImage = $car->images->first();
-    $imageUrl = $primaryImage
-        ? asset('storage/' . $primaryImage->image_path)
-        : 'https://via.placeholder.com/400x300?text=' . urlencode($car->brand->name ?? 'Car');
+    // Try to get filesystem cover image first, fallback to database image, then placeholder
+    $coverImage = $car->getCoverImage();
+    $imageUrl = $coverImage 
+        ? asset($coverImage)
+        : ($car->images->first() 
+            ? asset('storage/' . $car->images->first()->image_path)
+            : 'https://via.placeholder.com/400x300?text=' . urlencode($car->brand->name ?? 'Car'));
 @endphp
 
 <div class="group relative">
@@ -40,7 +43,7 @@
         </div>
     @endif
 
-    @if ($car->stock == 0)
+    @if ($car->status === 'sold' || $car->stock_quantity == 0)
         <div class="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow">
             Sold
         </div>
