@@ -8,10 +8,13 @@
             @forelse($cars as $car)
             <div class="group relative">
                 @php
-                $primaryImage = $car->images->first();
-                $imageUrl = $primaryImage
-                ? asset('storage/' . $primaryImage->image_path)
-                : 'https://via.placeholder.com/400x300?text=' . urlencode($car->brand->name ?? 'Car');
+                // Try to get filesystem cover image first, fallback to database image, then placeholder
+                $coverImage = $car->getCoverImage();
+                $imageUrl = $coverImage 
+                    ? asset($coverImage)
+                    : ($car->images->first() 
+                        ? asset('storage/' . $car->images->first()->image_path)
+                        : 'https://via.placeholder.com/400x300?text=' . urlencode($car->brand->name ?? 'Car'));
                 @endphp
 
                 <img src="{{ $imageUrl }}" alt="{{ $car->brand->name ?? '' }} {{ $car->carModel->name ?? '' }}"

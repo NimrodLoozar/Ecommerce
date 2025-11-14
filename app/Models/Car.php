@@ -344,4 +344,36 @@ class Car extends Model
         
         return $images;
     }
+
+    /**
+     * Get the cover image from filesystem.
+     * Searches for images with specific keywords (cover, main, thumbnail) in filename.
+     * Falls back to first image if no keyword match found.
+     * Returns the path to the cover image or null if no images found.
+     */
+    public function getCoverImage(): ?string
+    {
+        $images = $this->getFilesystemImages();
+        
+        if (empty($images)) {
+            return null;
+        }
+        
+        // Keywords to search for in image filenames (case-insensitive)
+        $coverKeywords = ['cover', 'main', 'thumbnail', 'thumb', 'primary'];
+        
+        // Search for an image with a cover keyword in its filename
+        foreach ($images as $imagePath) {
+            $filename = strtolower(basename($imagePath));
+            
+            foreach ($coverKeywords as $keyword) {
+                if (strpos($filename, $keyword) !== false) {
+                    return $imagePath;
+                }
+            }
+        }
+        
+        // If no cover image found, return the first image
+        return $images[0];
+    }
 }
