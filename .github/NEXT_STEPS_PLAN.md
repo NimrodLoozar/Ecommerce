@@ -1,14 +1,15 @@
 # Next Steps Implementation Plan
 
 **Project:** Laravel 12 Car Sales & Leasing Platform  
-**Date:** November 2025  
-**Status:** Phase 6 In Progress - Building Views & Frontend
+**Date:** December 2025  
+**Status:** Phase 6 In Progress - Building Views & Frontend  
+**Progress:** 31/78 views complete (40%)
 
 ---
 
 ## Overview
 
-With all 43 controllers implemented, we're now building the frontend views. Phase 6.1 is partially complete with homepage components connected to real database data.
+With all 43 controllers implemented, we're now building the frontend views. Phase 6 is progressing with 31/78 views complete (40%). Dealer management interface complete.
 
 ## ✅ Recently Completed (November 1, 2025)
 
@@ -189,6 +190,138 @@ With all 43 controllers implemented, we're now building the frontend views. Phas
 -   ✅ All relationships working correctly
 -   ✅ Dashboard loads without errors with zero data state
 
+### Dealer Cars Index Page (December 10, 2025)
+
+-   ✅ Created dealer cars index page (`dealer/cars/index.blade.php`)
+-   ✅ Comprehensive data table with car listings
+-   ✅ Statistics cards: Total Cars, Available, Sold, Reserved (calculated from data)
+-   ✅ Table columns: Car (image + title), Details (year/mileage/fuel), Price, Status, Stock, Views, Actions
+-   ✅ Status badges: green (available), purple (sold), yellow (reserved), gray (pending)
+-   ✅ Actions per car: View on site (opens public page in new tab), Edit button, Delete button (with confirmation)
+-   ✅ Empty state with helpful message and "Add New Car" CTA
+-   ✅ Pagination support with Laravel default pagination
+-   ✅ Updated Dealer\CarController@index to eager load images relationship
+-   ✅ Eager loading: brand, carModel, category, condition, images
+-   ✅ Authorization check: verifies user has dealerProfile
+-   ✅ Database fully seeded with 9 test cars (7 Renault + 2 Lynk & Co)
+-   ✅ All test data verified working
+
+### Dealer Car Create Form (December 10, 2025)
+
+-   ✅ Created dealer car create form (`dealer/cars/create.blade.php`)
+-   ✅ Comprehensive multi-section form with 8 sections
+-   ✅ Basic Information: Brand, Model, Year, Category, Condition
+-   ✅ Pricing & Stock: Sale Price, Lease Price, Stock Quantity
+-   ✅ Vehicle Specifications: Mileage, Fuel Type, Transmission, Engine Size, Horsepower, Doors, Seats, Colors
+-   ✅ Vehicle Identification: VIN, License Plate
+-   ✅ Description: Long-form text area for vehicle details
+-   ✅ Features: Multi-select checkboxes for all available features (45 total)
+-   ✅ Images: Multi-file upload support (up to 10 images, 5MB each)
+-   ✅ Additional Options: Featured vehicle checkbox
+-   ✅ Alpine.js integration for dynamic UI (fuel type, transmission)
+-   ✅ Full validation with error display for all fields
+-   ✅ Updated Dealer\CarController@create to load all form data (brands, models, categories, conditions, features)
+-   ✅ Fixed VIN field name mismatch (changed from vin_number to vin in controller)
+-   ✅ Back button to inventory, Cancel button, Submit button
+-   ✅ Form posts to dealer.cars.store route
+-   ✅ All 50 car models available in dropdown with brand association
+
+### Dealer Car Edit Form (December 10, 2025)
+
+-   ✅ Created dealer car edit form (`dealer/cars/edit.blade.php`)
+-   ✅ Adapted from create form with pre-populated values
+-   ✅ All 8 sections with existing car data loaded via `old('field', $car->field)` pattern
+-   ✅ Existing images display with primary badge and hover effects
+-   ✅ Add new images section (multi-file upload)
+-   ✅ Features pre-checked based on existing car features
+-   ✅ Alpine.js reactive state initialized with existing values
+-   ✅ Form method changed to PATCH via `@method('PATCH')`
+-   ✅ Updated Dealer\CarController@edit to load carModels with brand relationship
+-   ✅ Submit button text changed to "Update Vehicle"
+-   ✅ Form posts to `dealer.cars.update` route
+-   ✅ Cancel and back buttons route to inventory
+
+### Dealer Order Management (December 10, 2025)
+
+-   ✅ Created dealer orders index page (`dealer/orders/index.blade.php`)
+-   ✅ Table view with order number, customer info, items count, total, status, date
+-   ✅ Status badges with color coding (pending, confirmed, processing, shipped, delivered, completed, cancelled)
+-   ✅ Empty state for dealers with no orders
+-   ✅ Pagination support for large order lists
+-   ✅ Success message display after status updates
+-   ✅ Back to dashboard button
+-   ✅ Created dealer order detail page (`dealer/orders/show.blade.php`)
+-   ✅ Three-column layout with order items, customer info, and sidebar
+-   ✅ Order items display with car images, specs, quantity, and pricing
+-   ✅ Customer information section (name, email, phone)
+-   ✅ Shipping address display
+-   ✅ Customer notes section
+-   ✅ Order summary with subtotal, tax, delivery fee, and total
+-   ✅ Payment information (method and status with color coding)
+-   ✅ Status update form for active orders (disabled for completed/cancelled)
+-   ✅ All 7 order statuses supported in dropdown
+-   ✅ Form posts to `dealer.orders.update` route with PATCH method
+
+### Dealer Analytics Dashboard (December 10, 2025)
+
+-   ✅ Created dealer analytics dashboard (`dealer/analytics/index.blade.php`)
+-   ✅ Three key metric cards: Total Inquiries, Conversion Rate, Test Drives
+-   ✅ Sales trend chart (last 12 months) using Chart.js line graph
+-   ✅ Revenue by category chart using Chart.js doughnut chart
+-   ✅ Top 10 selling cars list with ranking badges
+-   ✅ Top 10 most viewed cars list with view counts
+-   ✅ Test drive status breakdown (pending, confirmed, completed, cancelled)
+-   ✅ Color-coded status cards for test drives
+-   ✅ Chart.js 4.4.0 loaded via CDN in @push('scripts')
+-   ✅ Responsive grid layout for all sections
+-   ✅ Empty states for lists with no data
+-   ✅ Currency formatting with € symbol and thousand separators
+-   ✅ Back to dashboard button
+
+### Dealer Commissions Tracking (December 10, 2025)
+
+-   ✅ Created dealer commissions index (`dealer/commissions/index.blade.php`)
+-   ✅ Two summary cards: Total Earned (paid), Pending Payment
+-   ✅ Commission table with order number, customer, amount, rate, status, date
+-   ✅ Status badges: pending (yellow), paid (green), cancelled (red)
+-   ✅ Clickable order numbers linking to order details
+-   ✅ Customer info displayed (name and email)
+-   ✅ Commission rate percentage shown
+-   ✅ View action linking to commission details
+-   ✅ Empty state for dealers with no commissions
+-   ✅ Pagination support
+-   ✅ Back to dashboard button
+
+### Dealer Profile Pages (December 10, 2025)
+
+-   ✅ Created dealer profile show page (`dealer/profile/show.blade.php`)
+-   ✅ Status badge with color coding (pending, approved, suspended, rejected)
+-   ✅ Three-column layout with main content and sidebar
+-   ✅ Company information section (name, business registration, tax ID, phone, website)
+-   ✅ About section with description (whitespace-pre-line formatting)
+-   ✅ Business details section (commission rate, subscription plan, owner, email, member since, approved date)
+-   ✅ Company logo display with placeholder for no logo
+-   ✅ Quick stats sidebar (total vehicles, active listings, total sales)
+-   ✅ Documents list with download links
+-   ✅ Edit profile button
+-   ✅ Created dealer profile edit page (`dealer/profile/edit.blade.php`)
+-   ✅ Multi-section form: Company Info, Logo, Business Settings, Documents, Account Status
+-   ✅ All fields pre-populated with `old()` fallback to existing data
+-   ✅ Company name, business registration, tax ID fields
+-   ✅ Phone and website fields with validation
+-   ✅ Description textarea (4 rows, 2000 char limit)
+-   ✅ Logo upload with current logo preview and replace option
+-   ✅ Commission rate and subscription plan (read-only, managed by admins)
+-   ✅ Bank account information textarea for payment details
+-   ✅ Multiple document upload with existing documents display
+-   ✅ Account status display (read-only badge)
+-   ✅ Updated ProfileController to handle actual model fields
+-   ✅ File upload handling for logo (2MB max, stored in dealer-logos)
+-   ✅ Multiple document uploads (5MB max each, stored in dealer-documents)
+-   ✅ Old file deletion on logo replacement
+-   ✅ Validation: company_name required, image types, file sizes
+-   ✅ Success message redirect to profile show page
+
 **Components Status:**
 
 -   ✅ `ecommerce-nav` - Navigation with mega menus (UPDATED with Orders link)
@@ -259,17 +392,17 @@ With all 43 controllers implemented, we're now building the frontend views. Phas
 | View File                                            | Purpose             | Controller Method                 | Status      | Priority |
 | ---------------------------------------------------- | ------------------- | --------------------------------- | ----------- | -------- |
 | `resources/views/dealer/dashboard.blade.php`         | Dealer dashboard    | Dealer\DashboardController@index  | ✅ COMPLETE | HIGH     |
-| `resources/views/dealer/cars/index.blade.php`        | Inventory list      | Dealer\CarController@index        | ⏳ TODO     | HIGH     |
-| `resources/views/dealer/cars/create.blade.php`       | Add new car         | Dealer\CarController@create       | ⏳ TODO     | HIGH     |
-| `resources/views/dealer/cars/edit.blade.php`         | Edit car            | Dealer\CarController@edit         | ⏳ TODO     | HIGH     |
+| `resources/views/dealer/cars/index.blade.php`        | Inventory list      | Dealer\CarController@index        | ✅ COMPLETE | HIGH     |
+| `resources/views/dealer/cars/create.blade.php`       | Add new car         | Dealer\CarController@create       | ✅ COMPLETE | HIGH     |
+| `resources/views/dealer/cars/edit.blade.php`         | Edit car            | Dealer\CarController@edit         | ✅ COMPLETE | HIGH     |
 | `resources/views/dealer/cars/show.blade.php`         | Car details         | Dealer\CarController@show         | ⏳ TODO     | MEDIUM   |
-| `resources/views/dealer/orders/index.blade.php`      | Order management    | Dealer\OrderController@index      | ⏳ TODO     | MEDIUM   |
-| `resources/views/dealer/orders/show.blade.php`       | Order details       | Dealer\OrderController@show       | ⏳ TODO     | MEDIUM   |
-| `resources/views/dealer/analytics/index.blade.php`   | Analytics dashboard | Dealer\AnalyticsController@index  | ⏳ TODO     | MEDIUM   |
-| `resources/views/dealer/commissions/index.blade.php` | Commission reports  | Dealer\CommissionController@index | ⏳ TODO     | MEDIUM   |
+| `resources/views/dealer/orders/index.blade.php`      | Order management    | Dealer\OrderController@index      | ✅ COMPLETE | MEDIUM   |
+| `resources/views/dealer/orders/show.blade.php`       | Order details       | Dealer\OrderController@show       | ✅ COMPLETE | MEDIUM   |
+| `resources/views/dealer/analytics/index.blade.php`   | Analytics dashboard | Dealer\AnalyticsController@index  | ✅ COMPLETE | MEDIUM   |
+| `resources/views/dealer/commissions/index.blade.php` | Commission reports  | Dealer\CommissionController@index | ✅ COMPLETE | MEDIUM   |
 | `resources/views/dealer/inquiries/index.blade.php`   | Customer inquiries  | Dealer\InquiryController@index    | ⏳ TODO     | LOW      |
-| `resources/views/dealer/profile/show.blade.php`      | Dealer profile      | Dealer\ProfileController@show     | ⏳ TODO     | LOW      |
-| `resources/views/dealer/profile/edit.blade.php`      | Edit profile        | Dealer\ProfileController@edit     | ⏳ TODO     | LOW      |
+| `resources/views/dealer/profile/show.blade.php`      | Dealer profile      | Dealer\ProfileController@show     | ✅ COMPLETE | LOW      |
+| `resources/views/dealer/profile/edit.blade.php`      | Edit profile        | Dealer\ProfileController@edit     | ✅ COMPLETE | LOW      |
 
 **Components Needed:**
 
@@ -278,6 +411,8 @@ With all 43 controllers implemented, we're now building the frontend views. Phas
 -   Table with sorting component
 -   Multi-image upload component
 -   Status update form
+
+**Progress:** 10/20 Dealer Views Complete (50%)
 
 ---
 

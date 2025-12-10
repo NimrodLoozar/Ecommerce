@@ -1,19 +1,26 @@
 ## Quick context for AI coding agents
 
-This is a Laravel 12 (PHP 8.2) ecommerce application for selling and leasing new and used cars from various brands. Built with Vite + Tailwind CSS for frontend. The codebase follows PSR-4 with `App\\` namespace mapped to `app/`.
+This is a Laravel 12 (PHP 8.2) ecommerce application for selling and leasing new and used cars from various brands. Built with Vite + Tailwind CSS + Alpine.js for frontend. The codebase follows PSR-4 with `App\\` namespace mapped to `app/`.
 
-### Project Status (November 7, 2025)
+### Project Status (December 10, 2025)
 
-**Phase:** Building dealer inventory management interface
-**Progress:** 22/78 views complete (28%)
+**Phase:** Dealer management interface complete, moving to customer views  
+**Progress:** 31/78 views complete (40%)
 
 -   ✅ Public customer-facing pages (homepage, listings, car details with image gallery, brands)
 -   ✅ Shopping cart, checkout, and order management
 -   ✅ Address management
 -   ✅ Dealer dashboard with statistics
+-   ✅ Dealer cars index page (inventory list)
+-   ✅ Dealer car create form (8-section comprehensive form)
+-   ✅ Dealer car edit form (pre-populated with existing data)
 -   ✅ Image gallery with lightbox (filesystem-based)
--   🔄 **IN PROGRESS:** Dealer car inventory management (create/edit/list)
--   ⏳ Dealer orders and analytics
+    ✅ Dealer order management (index and show views)
+    ✅ Dealer analytics dashboard with Chart.js visualizations
+    ✅ Dealer commissions tracking
+    ✅ Dealer profile pages (show and edit with file uploads)
+    🔄 **IN PROGRESS:** Customer dashboard and views
+    ⏳ Dealer inquiries management
 -   ⏳ Admin control panel
 -   ⏳ Wishlist and advanced search
 
@@ -45,26 +52,29 @@ npm run dev
 
 **Access application:** Visit `http://localhost:5173` (Vite proxies to Laravel backend)
 
-Or use Docker for database + direct PHP server (recommended):
+**Vite configuration:** `vite.config.js` includes proxy: `^(?!/@vite|/@fs|/@id|/node_modules|/resources).*` → `http://localhost:8000`
+
+**Using composer scripts (recommended):**
 
 ```powershell
-docker compose up -d  # MySQL + phpMyAdmin
-npm run dev           # Vite hot reload in separate terminal
+composer setup  # Full setup: install deps, copy .env, generate key, migrate, build assets
+composer dev    # Runs serve + queue:listen + vite dev (uses concurrently)
+composer test   # Clears config cache and runs PHPUnit
 ```
 
-**Vite configuration:** `vite.config.js` includes proxy to forward requests to `localhost:8000`
-
-**Setup from scratch:**
+**Database setup:**
 
 ```powershell
-composer setup  # installs deps, copies .env, generates key, migrates, builds assets
+docker compose up -d           # Start MySQL 8.0 + phpMyAdmin
+php artisan migrate:fresh      # Reset database
+php artisan migrate:fresh --seed  # Reset + seed test data
 ```
 
-**Run tests:**
+**Test credentials after seeding:**
 
-```powershell
-composer test
-```
+-   Dealer: `dealer@example.com` / `password` (Premium Auto Sales)
+-   9 test cars created (7 Renault + 2 Lynk & Co)
+-   22 brands, 50 car models, 45 features seeded
 
 ### Frontend architecture
 
@@ -138,46 +148,134 @@ composer test
 -   **Factories over seeders:** Use `Database\\Factories` for test data
 -   **Config:** Wire external services through `config/*.php` + `.env` (never hardcode secrets)
 
-### User roles & access
+### User roles & access control
+
+**Three-tier role system:**
 
 -   **Customer:** Regular user who can browse, purchase, and manage orders
 -   **Dealer:** User with `dealerProfile` relationship (approved dealer account)
     -   Test account: `dealer@example.com` / `password`
     -   Company: Premium Auto Sales
-    -   Access to `/dealer/*` routes
+    -   Access to `/dealer/*` routes (protected by `auth` middleware)
+    -   Dashboard shows: Total Inventory, Available/Sold Cars, Revenue, Inquiries, Test Drives
 -   **Admin:** System administrator (not yet implemented)
+    -   Will have access to `/admin/*` routes
+    -   Intended for brand/model/category management, dealer approval
 
-**Navigation logic:**
+**Navigation logic** (`resources/views/components/ecommerce-nav.blade.php`):
 
--   If user has `dealerProfile`: Show "Dealer Dashboard", "My Inventory", "My Orders"
--   If regular user: Show "Dashboard", "My Orders"
--   Always show logout button (red, POST form with CSRF)
+-   Check `auth()->user()->dealerProfile` to determine if user is dealer
+-   Dealer: Show "Dealer Dashboard", "My Inventory", "My Orders"
+-   Customer: Show "Dashboard", "My Orders"
+-   Always show logout button (red, POST form with CSRF token)
 
-### Database schema notes
+**Route organization pattern:**
 
-**Important columns:**
+```php
+// Public routes - no auth required
+Route::get('/', [HomeController::class, 'index']);
+Route::get('/cars', [CarController::class, 'index']);
 
--   `cars.dealer_id` — Foreign key to `dealer_profiles.id` (nullable)
--   `cars.user_id` — User who created the listing (dealer or admin)
--   `orders.total` — Order total (NOT `total_amount`)
--   `cars.views_count` — View counter (NOT `views`)
--   Order has `orderItems()` alias method (points to `items()`)
+// Customer routes - auth middleware
+Route::middleware('auth')->group(function () {
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::get('/checkout', [CheckoutController::class, 'index']);
+});
 
-**Relationships:**
+// Dealer routes - auth middleware (add dealer check later)
+Route::prefix('dealer')->name('dealer.')->middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [Dealer\DashboardController::class, 'index']);
+    Route::get('/cars', [Dealer\CarController::class, 'index']);
+});
 
--   `Car::dealer()` — BelongsTo DealerProfile
--   `DealerProfile::cars()` — HasMany Car
--   `Order::orderItems()` — Alias for items() relationship
+// Admin routes - auth + admin middleware (future)
+Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [Admin\DashboardController::class, 'index']);
+});
+```
 
-**Car images:** Images are stored in filesystem, not database. Path structure: `public/img/{BrandName}/{Year BrandName ModelName}/`
+### Database schema & critical gotchas
 
--   `Car::getFilesystemImages()` method scans folders and returns array of image paths
--   Supports multiple folder name variations (e.g., "Megane" vs "Megan", "E-Tech" suffix)
--   Used in `CarController@show` and passed to view as `$filesystemImages`
+**Column naming conventions (IMPORTANT - common mistakes):**
 
-### Image gallery system
+-   ✅ `orders.total` — Order total (NOT `total_amount`)
+-   ✅ `cars.views_count` — View counter (NOT `views`)
+-   ✅ `cars.dealer_id` — Foreign key to `dealer_profiles.id` (nullable)
+-   ✅ `cars.user_id` — User who created the listing (dealer or admin)
+-   ✅ Order has `orderItems()` alias method (points to `items()` relationship)
 
-**Location:** `resources/views/cars/show.blade.php`
+**Key relationships (models):**
+
+```php
+// Car.php
+public function dealer(): BelongsTo  // dealer_id → dealer_profiles.id
+public function user(): BelongsTo    // user_id → users.id
+public function brand(): BelongsTo
+public function carModel(): BelongsTo
+public function images(): HasMany
+public function features(): BelongsToMany
+
+// User.php
+public function dealerProfile(): HasOne
+public function cars(): HasMany  // Cars created by this user
+public function orders(): HasMany
+public function reviews(): HasMany
+
+// DealerProfile.php
+public function user(): BelongsTo
+public function cars(): HasMany  // dealer_id foreign key
+public function commissions(): HasMany
+
+// Order.php
+public function user(): BelongsTo
+public function items(): HasMany  // Primary relationship
+public function orderItems(): HasMany  // ALIAS for items() - use for compatibility
+public function shippingAddress(): BelongsTo
+public function billingAddress(): BelongsTo
+```
+
+**Filesystem-based images (no database storage):**
+
+-   Path structure: `public/img/{BrandName}/{Year BrandName ModelName}/`
+-   Example: `public/img/Renault/2024 Renault Clio/image1.jpg`
+-   `Car::getFilesystemImages()` method scans folders and returns array of paths
+-   Handles variations: "Megane" vs "Megan", "E-Tech" suffix, spaces removed
+-   Used in `CarController@show` → pass `$filesystemImages` to view
+-   No `car_images` table records needed for filesystem images
+
+### Alpine.js patterns
+
+**Key pattern:** Use `x-data` for component state, `x-cloak` to prevent flash of unstyled content
+
+**Image gallery example** (`resources/views/cars/show.blade.php`):
+
+```blade
+<div x-data="imageGallery()" x-cloak>
+    <!-- Thumbnail grid -->
+    <div @click="selectImage(index)">
+        <img :class="currentIndex === index ? 'ring-2 ring-indigo-500' : ''">
+    </div>
+
+    <!-- Main image with navigation -->
+    <img :src="images[currentIndex]" @click="openLightbox">
+    <button @click="prevImage">←</button>
+    <button @click="nextImage">→</button>
+
+    <!-- Lightbox modal -->
+    <div x-show="lightboxOpen" @keydown.escape.window="closeLightbox">
+        <!-- Lightbox content -->
+    </div>
+</div>
+```
+
+**Component pattern:**
+
+-   Define `x-data` functions inline or in `resources/js/app.js`
+-   Use `x-show` for conditional rendering (keeps in DOM)
+-   Use `x-if` for conditional rendering (removes from DOM)
+-   Use `x-cloak` + CSS `[x-cloak] { display: none !important; }` to prevent FOUC
+
+**Image gallery system:**
 
 -   **Alpine.js component:** `imageGallery()` manages state and navigation
 -   **Thumbnail grid:** Click to select image, highlights current selection
@@ -190,7 +288,8 @@ composer test
 
 -   `app/Models/Car.php` — `getFilesystemImages()` method
 -   `app/Http/Controllers/CarController.php` — passes `$filesystemImages` to view
--   `resources/css/app.css` — `[x-cloak]` rule for Alpine.js
+-   `resources/css/app.css` — `[x-cloak]` rule and animations
+-   `resources/js/app.js` — Alpine initialization and custom behaviors
 
 **Folder structure example:**
 
@@ -203,12 +302,61 @@ public/img/Renault/
       └── image1.jpg
 ```
 
+### Common tasks & patterns
+
+**Creating a new controller action:**
+
+1. Add route in `routes/web.php` (use route groups for auth/prefix)
+2. Create controller method in `app/Http/Controllers/`
+3. Eager load relationships to avoid N+1 queries
+4. Pass data to view using compact or array syntax
+5. Create corresponding Blade view in `resources/views/`
+
+**Eager loading pattern (avoid N+1):**
+
+```php
+// Dealer\CarController@index example
+public function index()
+{
+    $dealer = auth()->user()->dealerProfile;
+
+    $cars = Car::where('dealer_id', $dealer->id)
+        ->with(['brand', 'carModel', 'category', 'condition', 'images'])
+        ->paginate(15);
+
+    return view('dealer.cars.index', compact('cars'));
+}
+```
+
+**Model factory pattern (for tests/seeds):**
+
+```php
+// Use factories for test data, not manual DB inserts
+Car::factory()->count(10)->create([
+    'dealer_id' => $dealer->id,
+    'is_featured' => true,
+]);
+```
+
+**Blade component pattern:**
+
+```blade
+<!-- Reusable partial with props -->
+@include('cars.partials.car-card', ['car' => $car])
+
+<!-- Custom component (x- prefix) -->
+<x-ecommerce-nav />
+<x-shopping-cart />
+```
+
 ### PR checklist
 
 1. Run `composer test` and fix failures
 2. If assets changed, run `npm run build` and include `public/build/` output
 3. Update routes (`routes/web.php`) and controllers for new endpoints
 4. Add new `.env` keys to `config/*.php` defaults
+5. Update `.github/NEXT_STEPS_PLAN.md` to mark completed tasks
+6. Check for N+1 queries (use `with()` for eager loading)
 
 ### Examples
 

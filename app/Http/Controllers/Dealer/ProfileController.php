@@ -50,36 +50,49 @@ class ProfileController extends Controller
         }
 
         $request->validate([
-            'business_name' => 'required|string|max:255',
-            'contact_person' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
+            'company_name' => 'required|string|max:255',
+            'business_registration' => 'nullable|string|max:255',
+            'tax_id' => 'nullable|string|max:50',
             'phone' => 'required|string|max:20',
-            'address' => 'required|string|max:500',
-            'city' => 'required|string|max:100',
-            'state' => 'nullable|string|max:100',
-            'postal_code' => 'required|string|max:20',
-            'country' => 'required|string|max:100',
-            'tax_number' => 'nullable|string|max:50',
-            'commission_rate' => 'nullable|numeric|min:0|max:100',
-            'description' => 'nullable|string|max:2000',
             'website' => 'nullable|url|max:255',
+            'description' => 'nullable|string|max:2000',
+            'bank_account' => 'nullable|string|max:1000',
+            'logo' => 'nullable|image|mimes:jpeg,jpg,png,svg|max:2048',
+            'documents.*' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
         ]);
 
-        $dealer->update([
-            'business_name' => $request->business_name,
-            'contact_person' => $request->contact_person,
-            'email' => $request->email,
+        $data = [
+            'company_name' => $request->company_name,
+            'business_registration' => $request->business_registration,
+            'tax_id' => $request->tax_id,
             'phone' => $request->phone,
-            'address' => $request->address,
-            'city' => $request->city,
-            'state' => $request->state,
-            'postal_code' => $request->postal_code,
-            'country' => $request->country,
-            'tax_number' => $request->tax_number,
-            'commission_rate' => $request->commission_rate,
-            'description' => $request->description,
             'website' => $request->website,
-        ]);
+            'description' => $request->description,
+            'bank_account' => $request->bank_account,
+        ];
+
+        // Handle logo upload
+        if ($request->hasFile('logo')) {
+            // Delete old logo if exists
+            if ($dealer->logo) {
+                \Storage::delete($dealer->logo);
+            }
+            $data['logo'] = $request->file('logo')->store('dealer-logos', 'public');
+        }
+
+        // Handle documents upload
+        if ($request->hasFile('documents')) {
+            $existingDocuments = $dealer->documents ?? [];
+            $newDocuments = [];
+
+            foreach ($request->file('documents') as $document) {
+                $newDocuments[] = $document->store('dealer-documents', 'public');
+            }
+
+            $data['documents'] = array_merge($existingDocuments, $newDocuments);
+        }
+
+        $dealer->update($data);
 
         return redirect()->route('dealer.profile.show')
             ->with('success', 'Profile updated successfully!');

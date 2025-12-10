@@ -41,11 +41,12 @@ class CarController extends Controller
     public function create(): View
     {
         $brands = Brand::orderBy('name')->get();
+        $carModels = CarModel::with('brand')->orderBy('name')->get();
         $categories = Category::orderBy('name')->get();
         $conditions = Condition::orderBy('name')->get();
         $features = Feature::orderBy('name')->get();
 
-        return view('dealer.cars.create', compact('brands', 'categories', 'conditions', 'features'));
+        return view('dealer.cars.create', compact('brands', 'carModels', 'categories', 'conditions', 'features'));
     }
 
     /**
@@ -76,7 +77,7 @@ class CarController extends Controller
             'interior_color' => 'required|string|max:50',
             'doors' => 'required|integer|min:2|max:5',
             'seats' => 'required|integer|min:2|max:9',
-            'vin_number' => 'required|string|max:17|unique:cars,vin_number',
+            'vin' => 'required|string|max:17|unique:cars,vin',
             'license_plate' => 'nullable|string|max:20',
             'stock_quantity' => 'required|integer|min:0',
             'description' => 'nullable|string',
@@ -104,7 +105,7 @@ class CarController extends Controller
             'interior_color' => $request->interior_color,
             'doors' => $request->doors,
             'seats' => $request->seats,
-            'vin_number' => $request->vin_number,
+            'vin' => $request->vin,
             'license_plate' => $request->license_plate,
             'stock_quantity' => $request->stock_quantity,
             'status' => $request->stock_quantity > 0 ? 'available' : 'sold',
@@ -162,13 +163,14 @@ class CarController extends Controller
         }
 
         $brands = Brand::orderBy('name')->get();
+        $carModels = CarModel::with('brand')->orderBy('name')->get();
         $categories = Category::orderBy('name')->get();
         $conditions = Condition::orderBy('name')->get();
         $features = Feature::orderBy('name')->get();
 
         $car->load('features', 'images');
 
-        return view('dealer.cars.edit', compact('car', 'brands', 'categories', 'conditions', 'features'));
+        return view('dealer.cars.edit', compact('car', 'brands', 'carModels', 'categories', 'conditions', 'features'));
     }
 
     /**
@@ -199,7 +201,7 @@ class CarController extends Controller
             'interior_color' => 'required|string|max:50',
             'doors' => 'required|integer|min:2|max:5',
             'seats' => 'required|integer|min:2|max:9',
-            'vin_number' => 'required|string|max:17|unique:cars,vin_number,' . $car->id,
+            'vin' => 'required|string|max:17|unique:cars,vin',
             'license_plate' => 'nullable|string|max:20',
             'stock_quantity' => 'required|integer|min:0',
             'description' => 'nullable|string',
@@ -226,7 +228,7 @@ class CarController extends Controller
             'interior_color' => $request->interior_color,
             'doors' => $request->doors,
             'seats' => $request->seats,
-            'vin_number' => $request->vin_number,
+            'vin' => $request->vin,
             'license_plate' => $request->license_plate,
             'stock_quantity' => $request->stock_quantity,
             'status' => $request->stock_quantity > 0 ? 'available' : 'sold',
