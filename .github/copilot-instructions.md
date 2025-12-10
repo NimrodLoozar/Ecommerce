@@ -147,6 +147,12 @@ php artisan migrate:fresh --seed  # Reset + seed test data
 -   **Password hashing:** Use Eloquent `casts()` with `['password' => 'hashed']`
 -   **Factories over seeders:** Use `Database\\Factories` for test data
 -   **Config:** Wire external services through `config/*.php` + `.env` (never hardcode secrets)
+-   **Form Requests:** Use `app/Http/Requests/*` for validation (currently only auth requests implemented)
+-   **Controller namespaces:**
+    -   `App\Http\Controllers\` — customer-facing routes
+    -   `App\Http\Controllers\Dealer\` — dealer dashboard/management
+    -   `App\Http\Controllers\Admin\` — admin panel (planned)
+    -   `App\Http\Controllers\Api\` — API endpoints (if needed)
 
 ### User roles & access control
 
@@ -311,6 +317,28 @@ public/img/Renault/
 3. Eager load relationships to avoid N+1 queries
 4. Pass data to view using compact or array syntax
 5. Create corresponding Blade view in `resources/views/`
+
+**Form validation pattern:**
+
+```php
+// Option 1: Inline validation in controller
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'title' => 'required|string|max:255',
+        'price' => 'required|numeric|min:0',
+    ]);
+
+    Car::create($validated);
+}
+
+// Option 2: Form Request class (recommended for complex forms)
+// Create: php artisan make:request StoreCarRequest
+public function store(StoreCarRequest $request)
+{
+    Car::create($request->validated());
+}
+```
 
 **Eager loading pattern (avoid N+1):**
 
