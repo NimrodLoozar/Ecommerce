@@ -98,6 +98,9 @@ Route::prefix('dealer')->name('dealer.')->middleware(['auth'])->group(function (
     Route::get('/cars/{car}/edit', [Dealer\CarController::class, 'edit'])->name('cars.edit');
     Route::patch('/cars/{car}', [Dealer\CarController::class, 'update'])->name('cars.update');
     Route::delete('/cars/{car}', [Dealer\CarController::class, 'destroy'])->name('cars.destroy');
+    
+    // API endpoints for dynamic data
+    Route::get('/api/brands/{brand}/models', [Dealer\CarController::class, 'getModelsByBrand'])->name('api.brands.models');
 
     // Orders
     Route::get('/orders', [Dealer\OrderController::class, 'index'])->name('orders.index');

@@ -85,9 +85,12 @@
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="flex items-center">
                                                     <div class="flex-shrink-0 h-16 w-20">
-                                                        @if ($car->images->first())
+                                                        @php
+                                                            $coverImage = $car->getCoverImage();
+                                                        @endphp
+                                                        @if ($coverImage)
                                                             <img class="h-16 w-20 rounded object-cover"
-                                                                src="{{ Storage::url($car->images->first()->image_path) }}"
+                                                                src="{{ asset($coverImage) }}"
                                                                 alt="{{ $car->title }}">
                                                         @else
                                                             <div

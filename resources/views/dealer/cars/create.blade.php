@@ -20,12 +20,79 @@
                 <p class="mt-2 text-sm text-gray-600">Add a new vehicle to your inventory.</p>
             </div>
 
+            <!-- Validation Errors -->
+            @if ($errors->any())
+                <div class="mt-8 rounded-md bg-red-50 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="size-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">There were {{ $errors->count() }} error(s) with your
+                                submission</h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                <ul role="list" class="list-disc space-y-1 pl-5">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <form action="{{ route('dealer.cars.store') }}" method="POST" enctype="multipart/form-data" class="mt-8"
                 x-data="{
                     selectedBrand: '{{ old('brand_id') }}',
+                    selectedModel: '{{ old('car_model_id') }}',
+                    availableModels: [],
+                    loadingModels: false,
                     fuelType: '{{ old('fuel_type', 'gasoline') }}',
-                    transmission: '{{ old('transmission', 'manual') }}'
-                }">
+                    transmission: '{{ old('transmission', 'manual') }}',
+                    
+                    async loadModels(brandId, preserveSelection = false) {
+                        if (!brandId) {
+                            this.availableModels = [];
+                            this.selectedModel = '';
+                            return;
+                        }
+                        
+                        this.loadingModels = true;
+                        const previousModel = preserveSelection ? this.selectedModel : '';
+                        
+                        if (!preserveSelection) {
+                            this.selectedModel = '';
+                        }
+                        
+                        try {
+                            const response = await fetch(`/dealer/api/brands/${brandId}/models`);
+                            if (response.ok) {
+                                this.availableModels = await response.json();
+                                // Restore selected model if it exists in the loaded models
+                                if (previousModel) {
+                                    const modelExists = this.availableModels.some(m => m.id == previousModel);
+                                    if (modelExists) {
+                                        this.selectedModel = previousModel;
+                                    }
+                                }
+                            } else {
+                                console.error('Failed to load models');
+                                this.availableModels = [];
+                            }
+                        } catch (error) {
+                            console.error('Error loading models:', error);
+                            this.availableModels = [];
+                        } finally {
+                            this.loadingModels = false;
+                        }
+                    }
+                }"
+                x-init="if (selectedBrand) { await loadModels(selectedBrand, true) }">
                 @csrf
 
                 <div class="space-y-8">
@@ -36,11 +103,13 @@
                         <div class="mt-6 grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-6">
                             <!-- Brand -->
                             <div class="sm:col-span-3">
-                                <label for="brand_id" class="block text-sm font-medium text-gray-900">Brand</label>
+                                <label for="brand_id" class="block text-sm font-medium text-gray-900">Brand <span class="text-red-500">*</span></label>
                                 <div class="mt-2">
-                                    <select name="brand_id" id="brand_id" required x-model="selectedBrand"
+                                    <select name="brand_id" id="brand_id" required 
+                                        x-model="selectedBrand"
+                                        @change="loadModels(selectedBrand)"
                                         class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm @error('brand_id') ring-red-500 @enderror">
-                                        <option value="">Select a brand</option>
+                                        <option value="">Select a brand first</option>
                                         @foreach ($brands as $brand)
                                             <option value="{{ $brand->id }}"
                                                 {{ old('brand_id') == $brand->id ? 'selected' : '' }}>
@@ -56,21 +125,23 @@
 
                             <!-- Model -->
                             <div class="sm:col-span-3">
-                                <label for="car_model_id" class="block text-sm font-medium text-gray-900">Model</label>
+                                <label for="car_model_id" class="block text-sm font-medium text-gray-900">Model <span class="text-red-500">*</span></label>
                                 <div class="mt-2">
                                     <select name="car_model_id" id="car_model_id" required
-                                        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm @error('car_model_id') ring-red-500 @enderror">
-                                        <option value="">Select a model</option>
-                                        @foreach ($carModels as $model)
-                                            <option value="{{ $model->id }}" data-brand="{{ $model->brand_id }}"
-                                                {{ old('car_model_id') == $model->id ? 'selected' : '' }}>
-                                                {{ $model->brand->name }} {{ $model->name }}
-                                            </option>
-                                        @endforeach
+                                        x-model="selectedModel"
+                                        :disabled="!selectedBrand || loadingModels || availableModels.length === 0"
+                                        class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 @error('car_model_id') ring-red-500 @enderror">
+                                        <option value="" 
+                                            x-text="loadingModels ? 'Loading models...' : (!selectedBrand ? 'Select a brand first' : (availableModels.length === 0 ? 'No models available for this brand' : 'Select a model'))"></option>
+                                        <template x-for="model in availableModels" :key="model.id">
+                                            <option :value="model.id" x-text="model.name"></option>
+                                        </template>
                                     </select>
                                     @error('car_model_id')
                                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                     @enderror
+                                    <p class="mt-1 text-xs text-gray-500" x-show="!selectedBrand">Please select a brand to see available models</p>
+                                    <p class="mt-1 text-xs text-amber-600" x-show="selectedBrand && !loadingModels && availableModels.length === 0">No models are configured for this brand. Please contact an administrator.</p>
                                 </div>
                             </div>
 
@@ -431,7 +502,7 @@
                                 @error('images.*')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
-                                <p class="mt-1 text-xs text-gray-500">Maximum file size: 5MB per image</p>
+                                <p class="mt-1 text-xs text-gray-500">Maximum file size: 2MB per image. Use JPG, PNG, or WEBP format.</p>
                             </div>
                         </div>
                     </div>
@@ -469,11 +540,4 @@
             </form>
         </div>
     </div>
-
-    @push('scripts')
-        <script>
-            // TODO: Add dynamic model loading based on brand selection
-            // This will require an AJAX endpoint to fetch models by brand_id
-        </script>
-    @endpush
 </x-app-layout>

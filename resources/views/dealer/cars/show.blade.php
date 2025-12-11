@@ -141,18 +141,18 @@
                 <!-- Vehicle Details -->
                 <div class="lg:col-span-2 space-y-6">
                     <!-- Images -->
-                    @if ($car->images->count() > 0)
+                    @if (count($filesystemImages) > 0)
                         <div class="rounded-lg border border-gray-200 bg-white">
                             <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
                                 <h2 class="text-base font-semibold text-gray-900">Images</h2>
                             </div>
                             <div class="p-6">
                                 <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                                    @foreach ($car->images as $image)
+                                    @foreach ($filesystemImages as $index => $imagePath)
                                         <div class="relative">
-                                            <img src="{{ Storage::url($image->image_path) }}" alt="Car image"
+                                            <img src="{{ asset($imagePath) }}" alt="Car image"
                                                 class="aspect-square w-full rounded-lg object-cover">
-                                            @if ($image->is_primary)
+                                            @if ($index === 0)
                                                 <span
                                                     class="absolute top-2 left-2 rounded-md bg-indigo-600 px-2 py-1 text-xs font-semibold text-white">
                                                     Primary
@@ -161,6 +161,15 @@
                                         </div>
                                     @endforeach
                                 </div>
+                            </div>
+                        </div>
+                    @else
+                        <div class="rounded-lg border border-gray-200 bg-white">
+                            <div class="border-b border-gray-200 bg-gray-50 px-6 py-4">
+                                <h2 class="text-base font-semibold text-gray-900">Images</h2>
+                            </div>
+                            <div class="p-6">
+                                <p class="text-sm text-gray-500">No images uploaded yet. Images should be placed in the folder structure.</p>
                             </div>
                         </div>
                     @endif

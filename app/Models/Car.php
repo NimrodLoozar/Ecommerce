@@ -300,6 +300,8 @@ class Car extends Model
         
         // Try different subfolder name variations
         $possibleFolders = [
+            // First try with car ID (for dealer-added cars)
+            "{$year} {$brandName} {$modelName} - {$this->id}",
             // Exact match: "Year Brand Model"
             "{$year} {$brandName} {$modelName}",
             // Try with E-Tech suffix for electric Megane

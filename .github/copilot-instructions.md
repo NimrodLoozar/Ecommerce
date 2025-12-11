@@ -2,23 +2,24 @@
 
 This is a Laravel 12 (PHP 8.2) ecommerce application for selling and leasing new and used cars from various brands. Built with Vite + Tailwind CSS + Alpine.js for frontend. The codebase follows PSR-4 with `App\\` namespace mapped to `app/`.
 
-### Project Status (December 10, 2025)
+### Project Status (December 11, 2025)
 
 **Phase:** Dealer management interface complete, moving to customer views  
-**Progress:** 31/78 views complete (40%)
+**Progress:** 32/78 views complete (41%)
 
 -   ✅ Public customer-facing pages (homepage, listings, car details with image gallery, brands)
 -   ✅ Shopping cart, checkout, and order management
 -   ✅ Address management
 -   ✅ Dealer dashboard with statistics
 -   ✅ Dealer cars index page (inventory list)
--   ✅ Dealer car create form (8-section comprehensive form)
--   ✅ Dealer car edit form (pre-populated with existing data)
+-   ✅ Dealer car create form with cascading brand→model dropdowns
+-   ✅ Dealer car edit form (pre-populated, cascading dropdowns)
+-   ✅ Image upload system (filesystem-based, unique folders per car)
 -   ✅ Image gallery with lightbox (filesystem-based)
-    ✅ Dealer order management (index and show views)
-    ✅ Dealer analytics dashboard with Chart.js visualizations
-    ✅ Dealer commissions tracking
-    ✅ Dealer profile pages (show and edit with file uploads)
+-   ✅ Dealer order management (index and show views)
+-   ✅ Dealer analytics dashboard with Chart.js visualizations
+-   ✅ Dealer commissions tracking
+-   ✅ Dealer profile pages (show and edit with file uploads)
     🔄 **IN PROGRESS:** Customer dashboard and views
     ⏳ Dealer inquiries management
 -   ⏳ Admin control panel
@@ -240,18 +241,69 @@ public function shippingAddress(): BelongsTo
 public function billingAddress(): BelongsTo
 ```
 
-**Filesystem-based images (no database storage):**
+**Filesystem-based images (CRITICAL - no database storage):**
 
--   Path structure: `public/img/{BrandName}/{Year BrandName ModelName}/`
--   Example: `public/img/Renault/2024 Renault Clio/image1.jpg`
--   `Car::getFilesystemImages()` method scans folders and returns array of paths
--   Handles variations: "Megane" vs "Megan", "E-Tech" suffix, spaces removed
--   Used in `CarController@show` → pass `$filesystemImages` to view
--   No `car_images` table records needed for filesystem images
+-   **Path structure:** `public/img/{BrandName}/{Year BrandName ModelName - CarID}/`
+-   **Example:** `public/img/Renault/2025 Renault Clio - 10/image1.jpg`
+-   **Car ID suffix:** Required for dealer-added cars to ensure unique folders (prevents image conflicts)
+-   **Legacy support:** `Car::getFilesystemImages()` falls back to folders without ID for existing cars
+-   **Case sensitivity:** Brand folder matching is case-insensitive (handles `renault` vs `Renault`)
+-   **File naming:** Sequential `image1.jpg`, `image2.jpg`, etc.
+-   **Cover image:** `Car::getCoverImage()` returns first image or searches for keywords (cover, main, thumbnail)
+-   **No database records:** Images are filesystem-only, no `car_images` table entries
+-   **View usage:** Pass `$filesystemImages` array to views, use `asset($imagePath)` in templates
 
 ### Alpine.js patterns
 
 **Key pattern:** Use `x-data` for component state, `x-cloak` to prevent flash of unstyled content
+
+**Cascading dropdown example** (`resources/views/dealer/cars/create.blade.php`):
+
+```blade
+<form x-data="{
+    selectedBrand: '{{ old('brand_id') }}',
+    selectedModel: '{{ old('car_model_id') }}',
+    availableModels: [],
+    loadingModels: false,
+    
+    async loadModels(brandId, preserveSelection = false) {
+        if (!brandId) {
+            this.availableModels = [];
+            this.selectedModel = '';
+            return;
+        }
+        
+        this.loadingModels = true;
+        const previousModel = preserveSelection ? this.selectedModel : '';
+        
+        try {
+            const response = await fetch(`/dealer/api/brands/${brandId}/models`);
+            if (response.ok) {
+                this.availableModels = await response.json();
+                if (previousModel && this.availableModels.some(m => m.id == previousModel)) {
+                    this.selectedModel = previousModel;
+                }
+            }
+        } finally {
+            this.loadingModels = false;
+        }
+    }
+}"
+x-init="if (selectedBrand) { await loadModels(selectedBrand, true) }">
+    
+    <select x-model="selectedBrand" @change="loadModels(selectedBrand)">
+        <option value="">Select a brand first</option>
+        <!-- Brand options -->
+    </select>
+    
+    <select x-model="selectedModel" :disabled="!selectedBrand || loadingModels">
+        <option value="" x-text="loadingModels ? 'Loading models...' : 'Select a model'"></option>
+        <template x-for="model in availableModels" :key="model.id">
+            <option :value="model.id" x-text="model.name"></option>
+        </template>
+    </select>
+</form>
+```
 
 **Image gallery example** (`resources/views/cars/show.blade.php`):
 
@@ -307,6 +359,34 @@ public/img/Renault/
   └── 2022 Renault Megane E-Tech/
       └── image1.jpg
 ```
+
+### Dealer car creation workflow (CRITICAL)
+
+**Image upload process** (`Dealer\CarController@store`):
+1. Auto-generates `title` from `{year} {brand} {model}` (e.g., "2025 Renault Clio")
+2. Auto-generates unique `slug` with `uniqid()` suffix
+3. Creates folder: `public/img/{Brand}/{Year Brand Model - {car.id}}/`
+4. Checks for existing brand folder (case-insensitive) to avoid duplicates like `renault` and `Renault`
+5. Moves uploaded images as `image1.jpg`, `image2.jpg`, etc.
+
+**Cascading dropdown pattern** (`resources/views/dealer/cars/create.blade.php`):
+- **Brand dropdown:** User selects from active brands
+- **Model dropdown:** Dynamically loads via AJAX (`/dealer/api/brands/{brand}/models`)
+- **Alpine.js state:** Tracks `selectedBrand`, `selectedModel`, `availableModels`, `loadingModels`
+- **State restoration:** On validation errors, models repopulate automatically via `x-init`
+- **Empty states:** Shows "Select a brand first" or "No models available for this brand"
+
+**Validation gotchas:**
+- `user_id` is REQUIRED (set to `auth()->id()`)
+- `title` and `slug` are REQUIRED (auto-generated, not in form)
+- `lease_price` in form maps to `lease_price_monthly` in database
+- Images validated separately: max 2MB per image (PHP upload limit)
+- VIN must be unique on create, unique except current on update
+
+**PHP upload limits (Windows):**
+- Current limit: `upload_max_filesize = 2M`
+- Image validation matches PHP limit to prevent confusing errors
+- Form displays: "Maximum file size: 2MB per image"
 
 ### Common tasks & patterns
 
