@@ -14,7 +14,45 @@ class DealerSeeder extends Seeder
      */
     public function run(): void
     {
-        // Find or create dealer user
+        // Create owner/admin user - owns the platform and all default cars
+        $owner = User::firstOrCreate(
+            ['email' => 'owner@example.com'],
+            [
+                'name' => 'Platform Owner',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'),
+            ]
+        );
+
+        // Check if owner dealer profile already exists
+        if (!$owner->dealerProfile) {
+            // Create owner's dealer profile
+            DealerProfile::create([
+                'user_id' => $owner->id,
+                'company_name' => 'CarHub Platform',
+                'business_registration' => 'BR-2025-OWNER',
+                'tax_id' => 'TAX-OWNER-001',
+                'description' => 'Official platform dealer account. We manage the CarHub platform and offer a curated selection of quality vehicles from trusted sources.',
+                'phone' => '+1 (555) 000-0001',
+                'website' => 'https://carhub.example.com',
+                'commission_rate' => 0.00, // Platform owner doesn't pay commission
+                'subscription_plan' => 'enterprise',
+                'status' => 'approved',
+                'approved_by' => null,
+                'approved_at' => now(),
+            ]);
+
+            $this->command->info('Owner dealer profile created successfully!');
+        } else {
+            $this->command->warn('Owner dealer profile already exists!');
+        }
+
+        $this->command->info('Email: owner@example.com');
+        $this->command->info('Password: password');
+        $this->command->info('Company: CarHub Platform');
+        $this->command->info('---');
+
+        // Find or create regular dealer user
         $dealer = User::firstOrCreate(
             ['email' => 'dealer@example.com'],
             [

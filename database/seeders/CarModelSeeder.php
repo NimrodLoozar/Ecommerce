@@ -31,17 +31,24 @@ class CarModelSeeder extends Seeder
             
 
             // BMW (ID: 2)
+            ['brand_id' => 2, 'name' => '1 Series Sedan'],
+            ['brand_id' => 2, 'name' => '3 Series Touring'],
             ['brand_id' => 2, 'name' => '3 Series'],
             ['brand_id' => 2, 'name' => '5 Series'],
             ['brand_id' => 2, 'name' => 'X3'],
             ['brand_id' => 2, 'name' => 'X5'],
+            ['brand_id' => 2, 'name' => 'X7'],
             ['brand_id' => 2, 'name' => 'iX'],
+            ['brand_id' => 2, 'name' => 'i8 Coupe'],
 
             // Audi (ID: 3)
-            ['brand_id' => 3, 'name' => 'A3'],
+            ['brand_id' => 3, 'name' => 'A3 Cabriolet'],
+            ['brand_id' => 3, 'name' => 'A3 Sedan'],
             ['brand_id' => 3, 'name' => 'A4'],
             ['brand_id' => 3, 'name' => 'Q3'],
             ['brand_id' => 3, 'name' => 'Q5'],
+            ['brand_id' => 3, 'name' => 'Q6 e-tron offroad Concept'],
+            ['brand_id' => 3, 'name' => 'Q7'],
             ['brand_id' => 3, 'name' => 'e-tron'],
 
             // Peugeot (ID: 4)

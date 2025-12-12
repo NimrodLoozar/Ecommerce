@@ -73,8 +73,9 @@ php artisan migrate:fresh --seed  # Reset + seed test data
 
 **Test credentials after seeding:**
 
+-   Owner: `owner@example.com` / `password` (CarHub Platform - owns all default cars)
 -   Dealer: `dealer@example.com` / `password` (Premium Auto Sales)
--   9 test cars created (7 Renault + 2 Lynk & Co)
+-   9 test cars created (7 Renault + 2 Lynk & Co) - owned by platform owner
 -   22 brands, 50 car models, 45 features seeded
 
 ### Frontend architecture
@@ -161,11 +162,15 @@ php artisan migrate:fresh --seed  # Reset + seed test data
 
 -   **Customer:** Regular user who can browse, purchase, and manage orders
 -   **Dealer:** User with `dealerProfile` relationship (approved dealer account)
-    -   Test account: `dealer@example.com` / `password`
-    -   Company: Premium Auto Sales
+    -   Test account: `dealer@example.com` / `password` (Premium Auto Sales)
     -   Access to `/dealer/*` routes (protected by `auth` middleware)
     -   Dashboard shows: Total Inventory, Available/Sold Cars, Revenue, Inquiries, Test Drives
--   **Admin:** System administrator (not yet implemented)
+-   **Owner/Platform Admin:** Special dealer account that owns the platform and default cars
+    -   Test account: `owner@example.com` / `password` (CarHub Platform)
+    -   Has dealer profile with enterprise plan and 0% commission rate
+    -   Owns all default/seeded cars
+    -   Will have additional admin privileges (to be implemented)
+-   **Admin:** System administrator (planned for future)
     -   Will have access to `/admin/*` routes
     -   Intended for brand/model/category management, dealer approval
 

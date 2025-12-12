@@ -24,6 +24,12 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // Seed Dealer data first (owner user needs to exist before cars)
+        $this->call([
+            DealerSeeder::class,
+        ]);
+        $this->command->info('Dealer seeding completed successfully!');
+
         // Seed Phase 1 data
         $this->call([
             BrandSeeder::class,
@@ -45,11 +51,5 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->command->info('Phase 5 seeding completed successfully!');
-
-        // Seed Dealer data
-        $this->call([
-            DealerSeeder::class,
-        ]);
-        $this->command->info('Dealer seeding completed successfully!');
     }
 }
