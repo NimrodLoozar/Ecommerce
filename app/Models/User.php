@@ -27,6 +27,7 @@ class User extends Authenticatable
         'avatar',
         'is_active',
         'last_login_at',
+        'stripe_customer_id',
     ];
 
     /**
@@ -148,6 +149,22 @@ class User extends Authenticatable
     public function tradeIns(): HasMany
     {
         return $this->hasMany(TradeIn::class);
+    }
+
+    /**
+     * Get the user's saved payment methods.
+     */
+    public function paymentMethods(): HasMany
+    {
+        return $this->hasMany(PaymentMethod::class);
+    }
+
+    /**
+     * Get the user's default payment method.
+     */
+    public function defaultPaymentMethod(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PaymentMethod::class)->where('is_default', true);
     }
 
     /**

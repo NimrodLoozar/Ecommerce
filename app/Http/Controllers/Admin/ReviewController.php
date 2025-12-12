@@ -10,11 +10,20 @@ use Illuminate\View\View;
 
 class ReviewController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $reviews = Review::with(['user', 'car'])
-            ->latest()
-            ->paginate(20);
+        $query = Review::with(['user', 'car']);
+
+        // Filter by status
+        if ($request->filled('status')) {
+            if ($request->status === 'pending') {
+                $query->where('is_approved', false);
+            } elseif ($request->status === 'approved') {
+                $query->where('is_approved', true);
+            }
+        }
+
+        $reviews = $query->latest()->paginate(20);
 
         return view('admin.reviews.index', compact('reviews'));
     }

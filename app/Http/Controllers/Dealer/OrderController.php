@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dealer;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendOrderStatusUpdateEmail;
 use App\Models\Order;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -84,11 +85,16 @@ class OrderController extends Controller
             'status' => 'required|in:pending,confirmed,processing,shipped,delivered,completed,cancelled',
         ]);
 
+        $oldStatus = $order->status;
+
         $order->update([
             'status' => $request->status,
         ]);
 
-        // TODO: Send status update email to customer
+        // Send status update email to customer if status changed
+        if ($oldStatus !== $request->status) {
+            SendOrderStatusUpdateEmail::dispatch($order, $oldStatus);
+        }
 
         return redirect()->route('dealer.orders.show', $order)
             ->with('success', 'Order status updated successfully!');

@@ -12,6 +12,8 @@ use App\Http\Controllers\Dealer;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SearchController;
@@ -29,6 +31,14 @@ Route::get('/brands/{brand:slug}', [BrandController::class, 'show'])->name('bran
 Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
 Route::get('/categories/{category:slug}', [CategoryController::class, 'show'])->name('categories.show');
 Route::get('/search', [SearchController::class, 'index'])->name('search');
+
+// Payment webhooks (must be outside auth middleware)
+Route::post('/webhook/stripe', [PaymentController::class, 'webhook'])->name('webhook.stripe');
+Route::post('/webhook/mollie', [PaymentController::class, 'mollieWebhook'])->name('webhook.mollie');
+
+// PayPal return URLs
+Route::get('/payment/paypal/success', [PaymentController::class, 'paypalSuccess'])->name('payment.paypal.success');
+Route::get('/payment/paypal/cancel', [PaymentController::class, 'paypalCancel'])->name('payment.paypal.cancel');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -56,6 +66,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 
+    // Payment
+    Route::post('/payment/intent', [PaymentController::class, 'createPaymentIntent'])->name('payment.intent');
+    Route::post('/payment/confirm', [PaymentController::class, 'confirmPayment'])->name('payment.confirm');
+    Route::post('/payment/mollie/create', [PaymentController::class, 'createMolliePayment'])->name('payment.mollie.create');
+    Route::post('/payment/paypal/create', [PaymentController::class, 'createPayPalOrder'])->name('payment.paypal.create');
+    Route::post('/payment/paypal/capture', [PaymentController::class, 'capturePayPalOrder'])->name('payment.paypal.capture');
+
+    // Payment Methods
+    Route::get('/payment-methods', [PaymentMethodController::class, 'index'])->name('payment-methods.index');
+    Route::post('/payment-methods', [PaymentMethodController::class, 'store'])->name('payment-methods.store');
+    Route::patch('/payment-methods/{paymentMethod}/set-default', [PaymentMethodController::class, 'setDefault'])->name('payment-methods.set-default');
+    Route::delete('/payment-methods/{paymentMethod}', [PaymentMethodController::class, 'destroy'])->name('payment-methods.destroy');
+
     // Reviews
     Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
     Route::patch('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
@@ -81,6 +104,7 @@ Route::middleware('auth')->group(function () {
 
     // Trade-ins
     Route::get('/trade-ins', [TradeInController::class, 'index'])->name('trade-ins.index');
+    Route::get('/trade-ins/create', [TradeInController::class, 'create'])->name('trade-ins.create');
     Route::post('/trade-ins', [TradeInController::class, 'store'])->name('trade-ins.store');
     Route::get('/trade-ins/{tradeIn}', [TradeInController::class, 'show'])->name('trade-ins.show');
 });

@@ -25,6 +25,16 @@ class TradeInController extends Controller
     }
 
     /**
+     * Show the form for creating a new trade-in submission.
+     */
+    public function create(): View
+    {
+        $brands = Brand::orderBy('name')->get();
+
+        return view('trade-ins.create', compact('brands'));
+    }
+
+    /**
      * Store a newly created trade-in submission.
      */
     public function store(Request $request): RedirectResponse

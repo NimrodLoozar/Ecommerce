@@ -17,7 +17,7 @@ class SearchController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Car::with(['brand', 'carModel', 'category', 'condition', 'images'])
+        $query = Car::with(['brand', 'carModel', 'category', 'condition'])
             ->available();
 
         // Text search (search in brand name, model name, description)
@@ -162,6 +162,11 @@ class SearchController extends Controller
 
         // Paginate results
         $cars = $query->paginate(12)->withQueryString();
+        
+        // Add filesystem images to cars
+        foreach ($cars as $car) {
+            $car->filesystemImages = $car->getFilesystemImages();
+        }
 
         // Get filter options
         $brands = Brand::orderBy('name')->get();

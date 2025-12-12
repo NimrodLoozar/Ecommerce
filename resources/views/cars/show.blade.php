@@ -312,10 +312,124 @@
                 </div>
             </div>
 
+            <!-- Write Review Section -->
+            @auth
+            @if ($canReview)
+            <div class="mt-16">
+                <h3 class="text-lg font-medium text-gray-900">Write a Review</h3>
+                <p class="mt-1 text-sm text-gray-600">Share your experience with this vehicle</p>
+
+                <form action="{{ route('reviews.store') }}" method="POST" class="mt-6 space-y-6"
+                    x-data="{ rating: 0 }">
+                    @csrf
+                    <input type="hidden" name="car_id" value="{{ $car->id }}">
+
+                    <!-- Rating -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Your Rating <span class="text-red-500">*</span>
+                        </label>
+                        <div class="flex items-center space-x-1">
+                            <template x-for="star in 5" :key="star">
+                                <button type="button" @click="rating = star"
+                                    class="focus:outline-none transition-colors">
+                                    <svg class="w-8 h-8"
+                                        :class="star <= rating ? 'text-yellow-400' : 'text-gray-300'"
+                                        fill="currentColor" viewBox="0 0 20 20">
+                                        <path
+                                            d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" />
+                                    </svg>
+                                </button>
+                            </template>
+                            <span x-show="rating > 0" class="ml-2 text-sm text-gray-600" x-text="rating + ' out of 5 stars'"></span>
+                        </div>
+                        <input type="hidden" name="rating" x-model="rating" required>
+                        @error('rating')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Title -->
+                    <div>
+                        <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+                            Review Title <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="title" id="title" value="{{ old('title') }}" maxlength="100"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('title') border-red-500 @enderror"
+                            placeholder="Sum up your experience" required>
+                        @error('title')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Comment -->
+                    <div>
+                        <label for="comment" class="block text-sm font-medium text-gray-700 mb-2">
+                            Your Review <span class="text-red-500">*</span>
+                        </label>
+                        <textarea name="comment" id="comment" rows="4" maxlength="1000"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 @error('comment') border-red-500 @enderror"
+                            placeholder="Tell us about your experience with this vehicle" required>{{ old('comment') }}</textarea>
+                        @error('comment')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                        <p class="mt-1 text-sm text-gray-500">Maximum 1000 characters</p>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div>
+                        <button type="submit"
+                            class="inline-flex items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md transition">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            Submit Review
+                        </button>
+                        <p class="mt-2 text-sm text-gray-500">Your review will be visible after approval by our team.
+                        </p>
+                    </div>
+                </form>
+            </div>
+            @elseif ($userReview)
+            <div class="mt-16">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex">
+                        <svg class="h-5 w-5 text-blue-400 mr-2" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <p class="text-sm text-blue-700">
+                                You have already reviewed this vehicle.
+                                @if (!$userReview->is_approved)
+                                Your review is pending approval.
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+            @else
+            @if ($car->reviews->count() > 0)
+            <div class="mt-16">
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                    <p class="text-sm text-gray-600">
+                        <a href="{{ route('login') }}" class="text-indigo-600 hover:text-indigo-700 font-medium">Sign
+                            in</a>
+                        to leave a review for this vehicle
+                    </p>
+                </div>
+            </div>
+            @endif
+            @endauth
+
             <!-- Reviews -->
             @if ($car->reviews->count() > 0)
             <div class="mt-16 lg:col-span-7 lg:col-start-6 lg:mt-0">
-                <h3 class="text-lg font-medium text-gray-900">Recent Reviews</h3>
+                <h3 class="text-lg font-medium text-gray-900">Recent Reviews ({{ $car->reviews->count() }})</h3>
                 <div class="mt-6 flow-root">
                     <div class="-my-12 divide-y divide-gray-200">
                         @foreach ($car->reviews as $review)
@@ -337,8 +451,10 @@
                                 </div>
                             </div>
 
-                            <div class="mt-4 space-y-6 text-base italic text-gray-600">
-                                <p>{{ $review->comment }}</p>
+                            <div class="mt-4 space-y-2">
+                                <h5 class="text-sm font-semibold text-gray-900">{{ $review->title }}</h5>
+                                <p class="text-base text-gray-600">{{ $review->comment }}</p>
+                                <p class="text-xs text-gray-500">{{ $review->created_at->format('M d, Y') }}</p>
                             </div>
                         </div>
                         @endforeach

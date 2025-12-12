@@ -126,6 +126,24 @@ class CarController extends Controller
         // Calculate average rating
         $averageRating = $car->reviews()->approved()->avg('rating');
 
-        return view('cars.show', compact('car', 'similarCars', 'averageRating', 'filesystemImages'));
+        // Check if user can review (must be authenticated and have purchased this car)
+        $canReview = false;
+        $userReview = null;
+        if (auth()->check()) {
+            // Check if user has purchased this car (order completed or delivered)
+            $hasPurchased = auth()->user()->orders()
+                ->whereIn('status', ['completed', 'delivered'])
+                ->whereHas('items', function ($query) use ($car) {
+                    $query->where('car_id', $car->id);
+                })
+                ->exists();
+
+            // Check if user already reviewed this car
+            $userReview = auth()->user()->reviews()->where('car_id', $car->id)->first();
+
+            $canReview = $hasPurchased && !$userReview;
+        }
+
+        return view('cars.show', compact('car', 'similarCars', 'averageRating', 'filesystemImages', 'canReview', 'userReview'));
     }
 }

@@ -627,10 +627,10 @@
                                 </el-popover>
                             </div>
 
-                            <a href="#"
-                                class="flex items-center text-sm font-medium text-gray-700 hover:text-gray-800">Company</a>
-                            <a href="#"
-                                class="flex items-center text-sm font-medium text-gray-700 hover:text-gray-800">Stores</a>
+                            <a href="{{ route('cars.index') }}"
+                                class="flex items-center text-sm font-medium text-gray-700 hover:text-gray-800">Browse Cars</a>
+                            <a href="{{ route('search') }}"
+                                class="flex items-center text-sm font-medium text-gray-700 hover:text-gray-800">Advanced Search</a>
                         </div>
                     </el-popover-group>
 
@@ -682,8 +682,8 @@
 
                         <!-- Search -->
                         <div class="flex lg:ml-6">
-                            <a href="#" class="p-2 text-gray-400 hover:text-gray-500">
-                                <span class="sr-only">Search</span>
+                            <a href="{{ route('search') }}" class="p-2 text-gray-400 hover:text-gray-500">
+                                <span class="sr-only">Advanced Search</span>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
                                     data-slot="icon" aria-hidden="true" class="size-6">
                                     <path

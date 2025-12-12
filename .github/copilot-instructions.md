@@ -2,14 +2,18 @@
 
 This is a Laravel 12 (PHP 8.2) ecommerce application for selling and leasing new and used cars from various brands. Built with Vite + Tailwind CSS + Alpine.js for frontend. The codebase follows PSR-4 with `App\\` namespace mapped to `app/`.
 
-### Project Status (December 11, 2025)
+### Project Status (December 12, 2025)
 
-**Phase:** Dealer management interface complete, moving to customer views  
-**Progress:** 32/78 views complete (41%)
+**Phase:** Core features complete, payment gateways integrated, admin panel in progress  
+**Progress:** 41/78 views complete (53%)
 
 -   ✅ Public customer-facing pages (homepage, listings, car details with image gallery, brands)
 -   ✅ Shopping cart, checkout, and order management
 -   ✅ Address management
+-   ✅ Advanced search with 10+ filters
+-   ✅ Customer review system (write reviews, star ratings, admin moderation)
+-   ✅ Trade-in submission system (create, index, show views)
+-   ✅ **Multi-gateway payment system (Stripe, Mollie, PayPal)** with saved cards
 -   ✅ Dealer dashboard with statistics
 -   ✅ Dealer cars index page (inventory list)
 -   ✅ Dealer car create form with cascading brand→model dropdowns
@@ -20,10 +24,13 @@ This is a Laravel 12 (PHP 8.2) ecommerce application for selling and leasing new
 -   ✅ Dealer analytics dashboard with Chart.js visualizations
 -   ✅ Dealer commissions tracking
 -   ✅ Dealer profile pages (show and edit with file uploads)
-    🔄 **IN PROGRESS:** Customer dashboard and views
+-   ✅ Admin brand management (index, create, edit with CRUD)
+-   ✅ Admin car model management (index, create, edit with CRUD)
+-   ✅ Admin review moderation (approve/reject reviews)
+-   ✅ **Scheduled jobs** (abandoned cart emails, currency updates, monthly reports)
+    🔄 **IN PROGRESS:** Admin panel features (categories, features, users, dealers)
     ⏳ Dealer inquiries management
--   ⏳ Admin control panel
--   ⏳ Wishlist and advanced search
+-   ⏳ Customer wishlist and test drive bookings
 
 ### Key directories
 
@@ -71,12 +78,19 @@ php artisan migrate:fresh      # Reset database
 php artisan migrate:fresh --seed  # Reset + seed test data
 ```
 
+**CRITICAL seeder order** (in `DatabaseSeeder.php`):
+
+1. **DealerSeeder** must run FIRST (creates owner user)
+2. Then brand/model/category seeders
+3. Finally **CarSeeder** (requires owner user to exist)
+4. CarSeeder assigns all default cars to owner's `user_id` and `dealer_id`
+
 **Test credentials after seeding:**
 
 -   Owner: `owner@example.com` / `password` (CarHub Platform - owns all default cars)
 -   Dealer: `dealer@example.com` / `password` (Premium Auto Sales)
--   9 test cars created (7 Renault + 2 Lynk & Co) - owned by platform owner
--   22 brands, 50 car models, 45 features seeded
+-   19 test cars created (7 Renault + 2 Lynk & Co + 5 BMW + 5 Audi) - all owned by platform owner
+-   22 brands, 54 car models, 45 features seeded
 
 ### Frontend architecture
 
@@ -150,11 +164,14 @@ php artisan migrate:fresh --seed  # Reset + seed test data
 -   **Factories over seeders:** Use `Database\\Factories` for test data
 -   **Config:** Wire external services through `config/*.php` + `.env` (never hardcode secrets)
 -   **Form Requests:** Use `app/Http/Requests/*` for validation (currently only auth requests implemented)
+-   **Service Layer:** Payment logic in `app/Services/` (PaymentService, MolliePaymentService, PayPalPaymentService)
 -   **Controller namespaces:**
     -   `App\Http\Controllers\` — customer-facing routes
     -   `App\Http\Controllers\Dealer\` — dealer dashboard/management
-    -   `App\Http\Controllers\Admin\` — admin panel (planned)
+    -   `App\Http\Controllers\Admin\` — admin panel (in progress)
     -   `App\Http\Controllers\Api\` — API endpoints (if needed)
+-   **Jobs/Queues:** All email sending goes through queue jobs in `app/Jobs/` (uses database driver)
+-   **Scheduled Commands:** Background tasks in `app/Console/Commands/`, scheduled in `routes/console.php`
 
 ### User roles & access control
 
@@ -270,17 +287,17 @@ public function billingAddress(): BelongsTo
     selectedModel: '{{ old('car_model_id') }}',
     availableModels: [],
     loadingModels: false,
-    
+
     async loadModels(brandId, preserveSelection = false) {
         if (!brandId) {
             this.availableModels = [];
             this.selectedModel = '';
             return;
         }
-        
+
         this.loadingModels = true;
         const previousModel = preserveSelection ? this.selectedModel : '';
-        
+
         try {
             const response = await fetch(`/dealer/api/brands/${brandId}/models`);
             if (response.ok) {
@@ -295,12 +312,12 @@ public function billingAddress(): BelongsTo
     }
 }"
 x-init="if (selectedBrand) { await loadModels(selectedBrand, true) }">
-    
+
     <select x-model="selectedBrand" @change="loadModels(selectedBrand)">
         <option value="">Select a brand first</option>
         <!-- Brand options -->
     </select>
-    
+
     <select x-model="selectedModel" :disabled="!selectedBrand || loadingModels">
         <option value="" x-text="loadingModels ? 'Loading models...' : 'Select a model'"></option>
         <template x-for="model in availableModels" :key="model.id">
@@ -368,6 +385,7 @@ public/img/Renault/
 ### Dealer car creation workflow (CRITICAL)
 
 **Image upload process** (`Dealer\CarController@store`):
+
 1. Auto-generates `title` from `{year} {brand} {model}` (e.g., "2025 Renault Clio")
 2. Auto-generates unique `slug` with `uniqid()` suffix
 3. Creates folder: `public/img/{Brand}/{Year Brand Model - {car.id}}/`
@@ -375,23 +393,119 @@ public/img/Renault/
 5. Moves uploaded images as `image1.jpg`, `image2.jpg`, etc.
 
 **Cascading dropdown pattern** (`resources/views/dealer/cars/create.blade.php`):
-- **Brand dropdown:** User selects from active brands
-- **Model dropdown:** Dynamically loads via AJAX (`/dealer/api/brands/{brand}/models`)
-- **Alpine.js state:** Tracks `selectedBrand`, `selectedModel`, `availableModels`, `loadingModels`
-- **State restoration:** On validation errors, models repopulate automatically via `x-init`
-- **Empty states:** Shows "Select a brand first" or "No models available for this brand"
+
+-   **Brand dropdown:** User selects from active brands
+-   **Model dropdown:** Dynamically loads via AJAX (`/dealer/api/brands/{brand}/models`)
+-   **Alpine.js state:** Tracks `selectedBrand`, `selectedModel`, `availableModels`, `loadingModels`
+-   **State restoration:** On validation errors, models repopulate automatically via `x-init`
+-   **Empty states:** Shows "Select a brand first" or "No models available for this brand"
 
 **Validation gotchas:**
-- `user_id` is REQUIRED (set to `auth()->id()`)
-- `title` and `slug` are REQUIRED (auto-generated, not in form)
-- `lease_price` in form maps to `lease_price_monthly` in database
-- Images validated separately: max 2MB per image (PHP upload limit)
-- VIN must be unique on create, unique except current on update
+
+-   `user_id` is REQUIRED (set to `auth()->id()`)
+-   `title` and `slug` are REQUIRED (auto-generated, not in form)
+-   `lease_price` in form maps to `lease_price_monthly` in database
+-   Images validated separately: max 2MB per image (PHP upload limit)
+-   VIN must be unique on create, unique except current on update
 
 **PHP upload limits (Windows):**
-- Current limit: `upload_max_filesize = 2M`
-- Image validation matches PHP limit to prevent confusing errors
-- Form displays: "Maximum file size: 2MB per image"
+
+-   Current limit: `upload_max_filesize = 2M`
+-   Image validation matches PHP limit to prevent confusing errors
+-   Form displays: "Maximum file size: 2MB per image"
+
+### Payment Integration Architecture (CRITICAL)
+
+**Three payment gateways integrated:**
+
+1. **Stripe** (Primary) - `app/Services/PaymentService.php`
+
+    - Direct card processing with Stripe Elements (frontend never touches card data)
+    - Saved payment methods with Stripe Customer API
+    - One-click checkout for returning customers
+    - Flow: Create PaymentIntent → Confirm in browser → Webhook confirms → Order updated
+
+2. **Mollie** (Secondary - EU-focused) - `app/Services/MolliePaymentService.php`
+
+    - Redirect-based flow (iDEAL, Bancontact, SOFORT, credit cards)
+    - Flow: Create order → Create Mollie payment → Redirect to Mollie → Webhook confirms → Order updated
+    - Webhook URL: `POST /webhook/mollie` (must be public, no auth)
+
+3. **PayPal** (Optional) - `app/Services/PayPalPaymentService.php`
+    - Redirect-based flow with approval
+    - Flow: Create order → Create PayPal order → Redirect to PayPal → Return to success URL → Capture payment → Order updated
+    - Return URLs: `GET /payment/paypal/success`, `GET /payment/paypal/cancel`
+
+**Key Service Methods Pattern:**
+
+```php
+// All payment services implement similar interface
+createPayment(Order $order): array  // Returns checkout URL or client secret
+handleWebhook(string $id): void     // Processes payment status updates
+createRefund(Order $order, ?float $amount): array
+```
+
+**Checkout Flow (`resources/views/checkout/index.blade.php`):**
+
+-   User selects gateway via radio buttons (Stripe/Mollie/PayPal)
+-   JavaScript handlers: `handleStripePayment()`, `handleMolliePayment()`, `handlePayPalPayment()`
+-   Stripe: In-page with Elements, Mollie/PayPal: Redirect to external page
+-   All gateways update same `payments` table with `payment_method` field
+
+**Configuration (`config/payment.php`):**
+
+-   All API keys and secrets loaded from `.env`
+-   Currency, tax rate, and webhook URLs centralized
+-   Check `.env.example` for required keys
+
+**Important:**
+
+-   Never skip webhook signature verification (Stripe, Mollie)
+-   Always verify payment status server-side before fulfilling orders
+-   Test mode: Use test API keys (Stripe: `4242 4242 4242 4242`, Mollie: auto-success test banks, PayPal: sandbox accounts)
+
+**Documentation:** See `docs/PAYMENT_INTEGRATION.md` for full setup guide
+
+### Scheduled Jobs & Background Tasks
+
+**Commands in `app/Console/Commands/`:**
+
+1. **SendAbandonedCartEmails** - Finds carts abandoned 1-7 days ago, sends recovery emails
+
+    - Schedule: Daily at 10:00 AM
+    - Smart filtering: Excludes users who placed orders recently, requires cart items
+
+2. **CleanExpiredCarts** - Deletes carts older than 30 days
+
+    - Schedule: Weekly
+    - Database maintenance
+
+3. **GenerateMonthlyReports** - Creates commission reports for dealers
+
+    - Schedule: Monthly on 1st at midnight
+    - Creates pending `Commission` records, updates `DealerAnalytics`
+
+4. **UpdateCurrencyRates** - Fetches exchange rates from exchangerate-api.com
+
+    - Schedule: Daily
+    - Updates `currencies` table with 30+ currencies
+    - Uses EXCHANGERATE_API_KEY from `.env` (demo mode if not set)
+
+5. **SendTestDriveReminders** - Reminds users about upcoming test drives
+
+    - Schedule: Daily at 8:00 AM
+
+6. **SendReviewRequests** - Sends review requests for completed orders
+    - Schedule: Daily at 10:00 AM
+
+**Scheduling:** All commands registered in `routes/console.php` with `->daily()`, `->weekly()`, etc.
+
+**Queue System:**
+
+-   Driver: `database` (see `queue_jobs` table)
+-   Jobs in `app/Jobs/` (11 email jobs: OrderConfirmation, ReviewRequest, AbandonedCart, etc.)
+-   Run queue worker: `php artisan queue:listen` (included in `composer dev`)
+-   Emails use Mailables in `app/Mail/` (11 classes)
 
 ### Common tasks & patterns
 
